@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Creates Storageclass and Persistent Volume Claim used by Sauron.
+name: sauron-storage
+version: 3.0.1

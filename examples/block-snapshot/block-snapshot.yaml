@@ -1,0 +1,8 @@
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshot
+metadata:
+  name: zfssa-block-vs-snapshot
+spec:
+  volumeSnapshotClassName: zfssa-block-vs-example-vsc
+  source:
+    persistentVolumeClaimName: zfssa-block-vs-example-pvc

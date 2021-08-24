@@ -1,0 +1,4 @@
+apiVersion: v1
+name: zfssa-csi
+version: 0.0.2
+description: Deploys Oracle ZFS Storage Appliance CSI Plugin.

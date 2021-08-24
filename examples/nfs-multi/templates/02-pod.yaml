@@ -1,0 +1,49 @@
+{{- if .Values.deployPod -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.podNfsMultiName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    name: ol7slim-test
+
+spec:
+  restartPolicy: Always
+  containers:
+    - image: container-registry.oracle.com/os/oraclelinux:7-slim
+      command: ["/bin/sh", "-c"]
+      args: [ "tail -f /dev/null" ]
+      name: ol7slim
+      volumeMounts:
+        - name: vol0
+          mountPath: /mnt/{{ .Values.pvc0 }}
+        - name: vol1
+          mountPath: /mnt/{{ .Values.pvc1 }}
+        - name: vol2
+          mountPath: /mnt/{{ .Values.pvc2 }}
+        - name: vol3
+          mountPath: /mnt/{{ .Values.pvc3 }}
+        - name: vol4
+          mountPath: /mnt/{{ .Values.pvc4 }}
+  volumes:
+    - name: vol0
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc0 }}
+        readOnly: false
+    - name: vol1
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc1 }}
+        readOnly: false
+    - name: vol2
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc2 }}
+        readOnly: false
+    - name: vol3
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc3 }}
+        readOnly: false
+    - name: vol4
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc4 }}
+        readOnly: false
+{{- end }}

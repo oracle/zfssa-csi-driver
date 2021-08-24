@@ -1,0 +1,139 @@
+# Service defined here, plus serviceName below in StatefulSet,
+# are needed only because of condition explained in
+# https://github.com/kubernetes/kubernetes/issues/69608
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: zfssa-csi-driver
+  namespace: {{ .Values.deployment.namespace }}
+spec:
+  attachRequired: true
+  podInfoOnMount: true
+  volumeLifecycleModes:
+    - Persistent
+
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: zfssa-csi-nodeplugin
+  namespace: {{ .Values.deployment.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: zfssa-csi-nodeplugin
+  template:
+    metadata:
+      labels:
+        app: zfssa-csi-nodeplugin
+    spec:
+      serviceAccount: zfssa-csi
+      hostNetwork: true
+      containers:
+        - name: node-driver-registrar
+          image: {{ .Values.image.sidecarBase }}{{ .Values.images.csiNodeDriverRegistrar.name }}:{{ .Values.images.csiNodeDriverRegistrar.tag }}
+          args:
+            - --v=5
+            - --csi-address=/plugin/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/com.oracle.zfssabs/csi.sock
+          imagePullPolicy:  {{ .Values.image.pullPolicy }}
+          securityContext:
+            # This is necessary only for systems with SELinux, where
+            # non-privileged sidecar containers cannot access unix domain socket
+            # created by privileged CSI driver container.
+            privileged: true
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: {{ .Values.paths.pluginDir.mountPath }}
+            - name: registration-dir
+              mountPath: /registration
+
+        - name: zfssabs
+          image: {{ .Values.image.zfssaBase }}{{ .Values.images.zfssaCsiDriver.name }}:{{ .Values.images.zfssaCsiDriver.tag }}
+          args:
+            - "--drivername=zfssa-csi-driver.oracle.com"
+            - "--v=5"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nodeid=$(NODE_NAME)"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix://plugin/csi.sock
+            - name: LOG_LEVEL
+              value: "5"
+            - name: ZFSSA_TARGET
+              value: {{ .Values.zfssaInformation.target }}
+            - name: ZFSSA_INSECURE
+              value: "False"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          imagePullPolicy:  {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: socket-dir
+              mountPath: {{ .Values.paths.pluginDir.mountPath }}
+            - name: mountpoint-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: Bidirectional
+            - name: plugins-dir
+              mountPath: /var/lib/kubelet/plugins
+              mountPropagation: Bidirectional
+            - name: dev-dir
+              mountPath: /dev
+            - name: zfssa-credentials
+              mountPath: "/mnt/zfssa"
+              readOnly: true
+            - name: certs
+              mountPath: "/mnt/certs"
+              readOnly: true
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: {{ .Values.paths.pluginDir.hostPath }}
+            type: DirectoryOrCreate
+        - name: mountpoint-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: plugins-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins
+            type: Directory
+        - name: dev-dir
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: zfssa-credentials
+          secret:
+            secretName: oracle.zfssa.csi.node
+            items:
+              - key: zfssa.yaml
+                path: zfssa.yaml
+        - name: certs
+          secret:
+            secretName: oracle.zfssa.csi.node.certs
+            items:
+              - key: zfssa.crt
+                path: zfssa.crt

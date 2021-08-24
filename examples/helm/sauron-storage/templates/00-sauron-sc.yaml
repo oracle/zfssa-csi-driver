@@ -1,0 +1,20 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.storageClass.name }}
+provisioner: zfssa-csi-driver
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  volumeType:  {{ .Values.storageClass.volumeType }}
+  targetGroup:  {{ .Values.storageClass.targetGroup }}
+  blockSize: {{ .Values.storageClass.blockSize }}
+  pool: {{ .Values.storageClass.pool }}
+  project: {{ .Values.storageClass.project }}
+  targetPortal: {{ .Values.storageClass.targetPortal }}
+  nfsServer: {{ .Values.storageClass.nfsServer }}
+  rootUser: {{ .Values.storageClass.rootUser }}
+  rootGroup: {{ .Values.storageClass.rootGroup }}
+  rootPermissions: {{ .Values.storageClass.rootPermissions }}
+  shareNFS: {{ .Values.storageClass.shareNFS }}
+  restrictChown: {{ .Values.storageClass.restrictChown }}

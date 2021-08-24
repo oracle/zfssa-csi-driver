@@ -1,0 +1,21 @@
+# Various names used through example
+scExistingFilesystemName: zfssa-fs-existing-sc
+pvExistingFilesystemName: OVERRIDE
+pvcExistingFilesystemName: zfssa-fs-existing-pvc
+podExistingFilesystemName: zfssa-fs-existing-pod
+applianceName: OVERRIDE
+
+# Settings for target appliance
+appliance:
+  volumeType: thin
+  targetGroup: OVERRIDE
+  pool: OVERRIDE
+  project: OVERRIDE
+  targetPortal: OVERRIDE
+  nfsServer: OVERRIDE
+  rootUser: root
+  rootGroup: other
+
+# Settings for volume
+volMountPoint: OVERRIDE
+volSize: OVERRIDE
