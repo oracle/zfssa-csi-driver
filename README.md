@@ -1,4 +1,4 @@
-# About zfssa-cs-driver 
+# About zfssa-csi-driver 
 
 This plugin supports Oracle ZFS Storage Appliance
 as a backend for block storage (iSCSI volumes) and file storage (NFS).
@@ -19,6 +19,7 @@ ZFS Storage Appiance (or simulator). The management and data path
 can be the same address.
 * A suitable container image build environment. The Makefile currently uses docker
 but with minor updates to release-tools/build.make, podman should also be usable.
+* An account for use with [container-registry.oracle.com](https://container-registry.oracle.com/) image registry.
 
 ## Unsupported Functionality
 ZFS Storage Appliance CSI driver does not support the following functionality:
@@ -28,9 +29,23 @@ ZFS Storage Appliance CSI driver does not support the following functionality:
 
 Use and enhance the Makefile in the root directory and release-tools/build.make.
 
+Build the driver:
 ```
-make
+make build
 ```
+Depending on your golang installation, there may be dependencies identified by the build, install
+these and retry the build.
+
+Prior to building the container image, docker login to container-registry.oracle.com so the
+parent image container-registry.oracle.com/os/oraclelinux:7-slim can be retrieved. There may
+be license terms to accept at the web entry to the container registry:
+[container-registry.oracle.com](https://container-registry.oracle.com/).
+
+Once you are logged in you can make the container with the following:
+```
+make container
+```
+Tag and push the resulting container image to a container registry.
 
 ## Installation
 
