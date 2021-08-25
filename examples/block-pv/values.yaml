@@ -1,0 +1,20 @@
+# Various names used through example
+scBlockName: zfssa-block-existing-sc
+pvExistingName: OVERRIDE
+pvcExistingName: zfssa-block-existing-pvc
+podBlockName: zfssa-block-existing-pod
+applianceName: OVERRIDE
+
+# Settings for target appliance
+appliance:
+  volumeType: thin
+  targetGroup: OVERRIDE
+  pool: OVERRIDE
+  project: OVERRIDE
+  targetPortal: OVERRIDE
+  nfsServer: OVERRIDE
+  rootUser: root
+  rootGroup: other
+
+# Settings for volume
+volSize: OVERRIDE

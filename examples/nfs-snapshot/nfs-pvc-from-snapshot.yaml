@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zfssa-nfs-vs-restore-pvc 
+spec:
+  storageClassName: zfssa-nfs-vs-example-sc
+  dataSource:
+    name: zfssa-nfs-vs-snapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 68796

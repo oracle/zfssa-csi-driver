@@ -1,0 +1,75 @@
+{{- if .Values.persistentVolumeClaim.enabled -}}
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: {{ .Values.persistentVolumeClaim.namespace }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssec0
+  namespace: {{ .Values.persistentVolumeClaim.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.storageClass.name }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssec1
+  namespace: {{ .Values.persistentVolumeClaim.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.storageClass.name }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssec2
+  namespace: {{ .Values.persistentVolumeClaim.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.storageClass.name }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssg
+  namespace: {{ .Values.persistentVolumeClaim.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.storageClass.name }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ssp-many
+  namespace: {{ .Values.persistentVolumeClaim.namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size }}
+  storageClassName: {{ .Values.storageClass.name }}
+{{- end }}

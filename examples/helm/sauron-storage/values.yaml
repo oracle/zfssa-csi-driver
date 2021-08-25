@@ -1,0 +1,21 @@
+# Define Storage Class Parameters
+storageClass:
+  name: "sauron-sc"
+  blockSize: '"8192"'
+  pool: h1-pool1
+  project: pmonday
+  targetPortal: '"10.80.44.65:3260"'
+  nfsServer: '"10.80.44.65"'
+  rootUser: nobody
+  rootGroup: other
+  rootPermissions: '"777"'
+  shareNFS: '"on"'
+  restrictChown: '"false"'
+  volumeType: '"thin"'
+  targetGroup: '"csi-data-path-target"'
+
+# Define Persistent Volume Claim Parameters.
+persistentVolumeClaim:
+  enabled: true
+  namespace: sauron
+  size: 100Gi

@@ -1,0 +1,27 @@
+# Various names used through example
+scNfsMultiName: zfssa-nfs-multi-example-sc
+pvc0: ssec0
+pvc1: ssec1
+pvc2: ssec2
+pvc3: ssg
+pvc4: ssp-many
+podNfsMultiName: zfssa-nfs-multi-example-pod
+namespace: zfssa-nfs-multi
+
+# Settings for target appliance
+appliance:
+  volumeType: thin
+  targetGroup: OVERRIDE
+  pool: OVERRIDE
+  project: OVERRIDE
+  targetPortal: OVERRIDE
+  nfsServer: OVERRIDE
+  rootUser: root
+  rootGroup: other
+  shareNFS: "on"
+
+# Settings for volume
+volSize: OVERRIDE
+
+# Deploy a pod to consume the volumes
+deployPod: true
