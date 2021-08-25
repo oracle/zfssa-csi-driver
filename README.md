@@ -19,7 +19,6 @@ ZFS Storage Appiance (or simulator). The management and data path
 can be the same address.
 * A suitable container image build environment. The Makefile currently uses docker
 but with minor updates to release-tools/build.make, podman should also be usable.
-* An account for use with [container-registry.oracle.com](https://container-registry.oracle.com/) image registry.
 
 ## Unsupported Functionality
 ZFS Storage Appliance CSI driver does not support the following functionality:
@@ -36,16 +35,16 @@ make build
 Depending on your golang installation, there may be dependencies identified by the build, install
 these and retry the build.
 
-Prior to building the container image, docker login to container-registry.oracle.com so the
-parent image container-registry.oracle.com/os/oraclelinux:7-slim can be retrieved. There may
-be license terms to accept at the web entry to the container registry:
-[container-registry.oracle.com](https://container-registry.oracle.com/).
+The parent image for the container is container-registry.oracle.com/os/oraclelinux:7-slim, refer
+to [container-registry.oracle.com](https://container-registry.oracle.com/) for more information.
+The parent image can also be obtained from ghcr.io/oracle/oraclelinux and docker.io/library/oraclelinux.
 
-Once you are logged in you can make the container with the following:
+To build the container:
 ```
 make container
 ```
-Tag and push the resulting container image to a container registry.
+Tag and push the resulting container image to a container registry available to the
+Kubernetes cluster where it will be deployed.
 
 ## Installation
 
