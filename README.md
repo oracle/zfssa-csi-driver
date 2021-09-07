@@ -5,20 +5,20 @@ as a backend for block storage (iSCSI volumes) and file storage (NFS).
 
 | CSI Plugin Version | Supported CSI Versions | Supported Kubernetes Versions | Persistence | Supported Access Modes | Dynamic Provisioning | Raw Block Support |
 | --- | --- | --- | --- | --- | --- | --- |
-| v0.5.x | v1.0+ | v1.17.X+ | Persistent | Read/Write Once (for Block) | Yes | Yes |
+| v1.0.0 | v1.0+ | v1.17.X+ | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
 
 ## Requirements
 
 * Kubernetes v1.17 or above. 
 * A Container runtime implementing the Kubernetes Container Runtime Interface. This plugin was tested with CRI-O v1.17.
-* An Oracle ZFS Storage Appliance running Appliance Kit Version 8.8 or above. This plugin may work with previous
-versions but it is not tested with them. It is possible to use this
-driver with the [Oracle ZFS Storage Simulator](https://www.oracle.com/downloads/server-storage/sun-unified-storage-sun-simulator-downloads.html)
-* Access to both a management path and a data path for the target Oracle
-ZFS Storage Appiance (or simulator). The management and data path
+* An Oracle ZFS Storage Appliance running Appliance Kit Version 8.8 or above. This plugin may work with previous 
+  versions but it is not tested with them. It is possible to use this 
+  driver with the [Oracle ZFS Storage Simulator](https://www.oracle.com/downloads/server-storage/sun-unified-storage-sun-simulator-downloads.html)
+* Access to both a management path and a data path for the target Oracle 
+  ZFS Storage Appiance (or simulator). The management and data path
 can be the same address.
-* A suitable container image build environment. The Makefile currently uses docker
-but with minor updates to release-tools/build.make, podman should also be usable.
+* A suitable container image build environment (podman or docker are accounted
+  for in the makefile)
 
 ## Unsupported Functionality
 ZFS Storage Appliance CSI driver does not support the following functionality:
@@ -32,19 +32,32 @@ Build the driver:
 ```
 make build
 ```
-Depending on your golang installation, there may be dependencies identified by the build, install
+Depending on the golang installation, there may be dependencies identified by the build, install
 these and retry the build.
 
 The parent image for the container is container-registry.oracle.com/os/oraclelinux:7-slim, refer
 to [container-registry.oracle.com](https://container-registry.oracle.com/) for more information.
 The parent image can also be obtained from ghcr.io/oracle/oraclelinux and docker.io/library/oraclelinux.
 
-To build the container:
+The container build can use the "CONTAINER_PROXY" environment variable if the build
+is being done from behind a firewall:
 ```
+export DOCKER_PROXY=<proxy>
 make container
 ```
 Tag and push the resulting container image to a container registry available to the
-Kubernetes cluster where it will be deployed.
+Kubernetes cluster where it will be deployed or use the 'make push' option.
+
+The push target depends on the branch or tag name:
+
+* the branch must be prefixed with 'zfssa-' and can be pushed once
+* a branch with a suffix of '-canary' will be a canary image and can be pushed
+repeatedly
+
+Specify the REPOSITORY_NAME on the make command (login prior to pushing):
+```
+make push REGISTRY_NAME=<your registry base>
+```
 
 ## Installation
 
