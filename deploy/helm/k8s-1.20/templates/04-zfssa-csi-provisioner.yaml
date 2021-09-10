@@ -1,0 +1,90 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: zfssa-csi-provisioner
+  namespace: {{ .Values.deployment.namespace }}
+spec:
+  serviceName: "zfssa-csi-provisioner"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zfssa-csi-provisioner
+  template:
+    metadata:
+      labels:
+        app: zfssa-csi-provisioner
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - zfssa-csi-nodeplugin
+              topologyKey: kubernetes.io/hostname
+      serviceAccountName: zfssa-csi
+      containers:
+        - name: zfssa-csi-snapshotter
+          image: {{ .Values.image.sidecarBase }}{{ .Values.images.csiSnapshotter.name }}:{{ .Values.images.csiSnapshotter.tag }}
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election=false"
+          env:
+            - name: ADDRESS
+              value: /plugin/csi.sock
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /plugin
+        - name: zfssa-csi-resizer
+          image: {{ .Values.image.sidecarBase }}{{ .Values.images.csiResizer.name }}:{{ .Values.images.csiResizer.tag }}
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /plugin/csi.sock
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /plugin
+        - name: zfssa-csi-provisioner
+          image: {{ .Values.image.sidecarBase }}{{ .Values.images.csiProvisioner.name }}:{{ .Values.images.csiProvisioner.tag }}
+          args:
+            - -v=5
+            - --csi-address=/plugin/csi.sock
+            - --timeout=30s
+            - --feature-gates=Topology=true
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            # This is necessary only for systems with SELinux, where
+            # non-privileged sidecar containers cannot access unix domain socket
+            # created by privileged CSI driver container.
+            privileged: true
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /plugin
+        - name: zfssa-csi-attacher
+          image: {{ .Values.image.sidecarBase }}{{ .Values.images.csiAttacher.name }}:{{ .Values.images.csiAttacher.tag }}
+          args:
+            - --v=5
+            - --csi-address=/plugin/csi.sock
+            # securityContext:
+            # This is necessary only for systems with SELinux, where
+            # non-privileged sidecar containers cannot access unix domain socket
+            # created by privileged CSI driver container.
+            # privileged: true
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: {{ .Values.paths.pluginDir.mountPath }}
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: {{ .Values.paths.pluginDir.hostPath }}
+            type: DirectoryOrCreate

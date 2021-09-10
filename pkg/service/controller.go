@@ -168,6 +168,11 @@ func validateCreateVolumeReq(ctx context.Context, token *zfssarest.Token, req *c
 	return err
 }
 
+func (zd *ZFSSADriver) ControllerGetVolume(ctx context.Context, request *csi.ControllerGetVolumeRequest) (
+	*csi.ControllerGetVolumeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "ControllerGetVolume is not implemented")
+}
+
 func (zd *ZFSSADriver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (
 	*csi.DeleteVolumeResponse, error) {
 
