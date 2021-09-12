@@ -8,6 +8,19 @@ Prior to running this example, the NFS environment must be set up properly
 on both the Kubernetes worker nodes and the Oracle ZFS Storage Appliance.
 Refer to the [INSTALLATION](../../INSTALLATION.md) instructions for details.
 
+There is a helm deployment in this example that handles initial setup of a volume
+and a snapshot class:
+* [Create and use initial volume](./nfs-snapshot-creator)
+
+Then a set of resources that have to applied in order, outside a helm deployment.
+* [Create and use snapshot](./nfs-snapshot-user)
+
+The values between the deployments have to be coordinated though a local values
+file and edited in the resource files. Because the creation and usage of the snapshot
+does not use helm, the resource descriptions have to be modified based on
+the environment for the example. There are more variables in the example then
+in others, read carefully.
+
 ## Configuration
 
 Set up a local values files. It must contain the values that customize to the 
@@ -20,29 +33,19 @@ customize are:
   * nfsServer: the NFS data path IP address
 * volSize: the size of the filesystem share to create
 
-## Enabling Volume Snapshot Feature (Only for Kubernetes v1.17 - v1.19)
-
-The Kubernetes Volume Snapshot feature became GA in Kubernetes v1.20. In order to use
-this feature in Kubernetes pre-v1.20, it MUST be enabled prior to deploying ZS CSI Driver. 
-To enable the feature on Kubernetes pre-v1.20, follow the instructions on 
-[INSTALLATION](../../INSTALLATION.md).
-
-## Deployment
+## Initial share creation
 
 This step includes deploying a pod with an NFS volume attached using a regular 
 storage class and a persistent volume claim. It also deploys a volume snapshot class
-required to take snapshots of the persistent volume.
+required to take snapshots of the persistent volume in a later section.
 
-Assuming there is a set of values in the local-values directory, deploy using Helm 3. If you plan to exercise creating volume from a snapshot with given yaml files as they are, define the names in the local-values.yaml as follows. You can modify them as per your preference.
-```text
-scNfsName: zfssa-nfs-vs-example-sc
-vscNfsName: zfssa-nfs-vs-example-vsc
-pvcNfsName: zfssa-nfs-vs-example-pvc
-podNfsName: zfssa-nfs-vs-example-pod
-```
+From the nfs-vsc directory, the command to create the initial volume and snapshot
+looks similar to the following (depending on your environment). Remember it is
+always useful to use 'helm template' prior to installing to ensure the setup will
+be correct.
 
 ```text
-helm ../install -f local-values/local-values.yaml zfssa-nfs-vsc ./
+helm install -f local-values/local-values.yaml zfssa-nfs-vsc ./nfs-snapshot-creator
 ```
 
 Once deployed, verify each of the created entities using kubectl:
@@ -94,13 +97,13 @@ Tue Jan 19 23:13:10 UTC 2021
 
 ## Creating snapshot 
 
-Use configuration files in examples/nfs-snapshot directory with proper modifications 
+Use configuration files in the nfs-snapshot-user directory with proper modifications 
 for the rest of the example steps.
 
 Create a snapshot of the volume by running the command below:
 
 ```text
-kubectl apply -f ../nfs-snapshot/nfs-snapshot.yaml
+kubectl apply -f nfs-snapshot-user/nfs-snapshot.yaml
 ```
 
 Verify the volume snapshot is created and available by running the following command:
@@ -112,10 +115,10 @@ kubectl get volumesnapshot
 Wait until the READYTOUSE of the snapshot becomes true before moving on to the next steps. 
 It is important to use the RESTORESIZE value of the volume snapshot just created when specifying
 the storage capacity of a persistent volume claim to provision a persistent volume using this 
-snapshot. For example, the storage capacity in ../nfs-snapshot/nfs-pvc-from-snapshot.yaml
+snapshot. For example, the storage capacity in nfs-snapshot-user/nfs-pvc-from-snapshot.yaml.
 
-Optionally, verify the volume snapshot exists on ZFS Storage Appliance. The snapshot name
-on ZFS Storage Appliance should have the volume snapshot UID as the suffix.
+Optionally, verify the volume snapshot exists on the Oracle ZFS Storage Appliance. The snapshot name
+on the Oracle ZFS Storage Appliance should have the volume snapshot UID as the suffix.
 
 ## Creating persistent volume claim 
 
@@ -124,9 +127,8 @@ the command below. Be aware that the persistent volume provisioned by this persi
 is not expandable. Create a new storage class with allowVolumeExpansion: true and use it when 
 specifying the persistent volume claim.
 
-
 ```text
-kubectl apply -f ../nfs-snapshot/nfs-pvc-from-snapshot.yaml
+kubectl apply -f nfs-snapshot-user/nfs-pvc-from-snapshot.yaml
 ```
 
 Verify the persistent volume claim is created and a volume is provisioned by running the following command:
@@ -146,7 +148,7 @@ persistentvolumeclaim/zfssa-nfs-vs-example-pvc   Bound    pvc-0c1e5351-dc1b-45a4
 persistentvolumeclaim/zfssa-nfs-vs-restore-pvc   Bound    pvc-59d8d447-302d-4438-a751-7271fbbe8238   10Gi       RWO            zfssa-nfs-vs-example-sc   116s
 ```
 
-Optionally, verify the new volume exists on ZFS Storage Appliance. Notice that the new
+Optionally, verify the new volume exists on the Oracle ZFS Storage Appliance. Notice that the new
 volume is a clone off the snapshot taken from the original volume.
 
 ## Creating pod using restored volume
@@ -154,7 +156,7 @@ volume is a clone off the snapshot taken from the original volume.
 Create a pod with the persistent volume claim created from the above step by running the command below:
 
 ```text
-kubectl apply -f ../nfs-snapshot/nfs-pod-restored-volume.yaml
+kubectl apply -f nfs-snapshot-user/nfs-pod-restored-volume.yaml
 ```
 
 The command `kubectl get pod` should now return something similar to this:
@@ -187,7 +189,12 @@ run the following commands below. Wait until the resources being deleted disappe
 the list that `kubectl get ...` command displays before running the next command.
 
 ```text
-kubectl delete -f ../nfs-snapshot/nfs-pod-restored-volume.yaml
-kubectl delete -f ../nfs-snapshot/nfs-pvc-from-snapshot.yaml
-kubectl delete -f ../nfs-snapshot/nfs-snapshot.yaml
+kubectl delete -f nfs-snapshot-user/nfs-pod-restored-volume.yaml
+kubectl delete -f nfs-snapshot-user/nfs-pvc-from-snapshot.yaml
+kubectl delete -f nfs-snapshot-user/nfs-snapshot.yaml
+```
+
+Once the clones and snapshots are deleted, uninstall the initial helm deployment:
+```text
+helm uninstall zfssa-nfs-vsc
 ```

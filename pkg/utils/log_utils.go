@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"golang.org/x/net/context"
 	"io/ioutil"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"log"
 	"os"
 	"strconv"
@@ -18,33 +18,33 @@ import (
 )
 
 const (
-	CSID int = iota	// CSI Driver
-	CTRL			// Controller Service
-	NODE			// Node Service
-	IDTY			// Identity Service
-	REST			// REST interface
-	UTIL			// Utilities that may be controller or node
+	CSID int = iota // CSI Driver
+	CTRL            // Controller Service
+	NODE            // Node Service
+	IDTY            // Identity Service
+	REST            // REST interface
+	UTIL            // Utilities that may be controller or node
 	SENTINEL
 )
 
-const MAX_LEVEL		int = 5
+const MAX_LEVEL int = 5
 
 type zLogger struct {
-	prefix	string
-	logger	[MAX_LEVEL]*log.Logger
+	prefix string
+	logger [MAX_LEVEL]*log.Logger
 }
 
 // Type of the key being used to add the array of loggers to the context.
-type zLoggersKey	string
+type zLoggersKey string
 
 var (
-	reqCounter			uint64
-	logLevelStr			string
-	logLevel			int
-	loggersPrefix		[SENTINEL]string
-	loggersTable		[MAX_LEVEL]*log.Logger
-	loggersKey			zLoggersKey = "zloggers"
-	loggerNOP			*log.Logger
+	reqCounter    uint64
+	logLevelStr   string
+	logLevel      int
+	loggersPrefix [SENTINEL]string
+	loggersTable  [MAX_LEVEL]*log.Logger
+	loggersKey    zLoggersKey = "zloggers"
+	loggerNOP     *log.Logger
 )
 
 // Log service initialization. The original loggers are created with a prefix identifying the
@@ -69,7 +69,7 @@ func InitLogs(level, driverName, version, nodeID string) {
 	loggersPrefix[UTIL] = nodeID + "/" + driverName + "/" + version + "\n\t"
 
 	for i := 0; i < MAX_LEVEL; i++ {
-		loggersTable[i] = log.New(os.Stdout, loggersPrefix[CSID] + "***  ",
+		loggersTable[i] = log.New(os.Stdout, loggersPrefix[CSID]+"***  ",
 			log.Lmsgprefix|log.Ldate|log.Ltime|log.Lshortfile)
 	}
 
@@ -120,9 +120,9 @@ func getLogger(ctx context.Context, sel int, level int) *log.Logger {
 }
 
 // Public function returning the appropriate logger.
-func GetLogCSID(ctx context.Context, level int) *log.Logger {  return getLogger(ctx, CSID, level) }
-func GetLogCTRL(ctx context.Context, level int) *log.Logger {  return getLogger(ctx, CTRL, level) }
-func GetLogNODE(ctx context.Context, level int) *log.Logger {  return getLogger(ctx, NODE, level) }
-func GetLogIDTY(ctx context.Context, level int) *log.Logger {  return getLogger(ctx, IDTY, level) }
-func GetLogREST(ctx context.Context, level int) *log.Logger {  return getLogger(ctx, REST, level) }
-func GetLogUTIL(ctx context.Context, level int) *log.Logger {  return getLogger(ctx, UTIL, level) }
+func GetLogCSID(ctx context.Context, level int) *log.Logger { return getLogger(ctx, CSID, level) }
+func GetLogCTRL(ctx context.Context, level int) *log.Logger { return getLogger(ctx, CTRL, level) }
+func GetLogNODE(ctx context.Context, level int) *log.Logger { return getLogger(ctx, NODE, level) }
+func GetLogIDTY(ctx context.Context, level int) *log.Logger { return getLogger(ctx, IDTY, level) }
+func GetLogREST(ctx context.Context, level int) *log.Logger { return getLogger(ctx, REST, level) }
+func GetLogUTIL(ctx context.Context, level int) *log.Logger { return getLogger(ctx, UTIL, level) }

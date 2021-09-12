@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2024, Oracle and/or its affiliates.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -17,41 +17,42 @@ import (
 )
 
 const (
-	VolumeIdLen		= 6
-	VolumeHandleLen	= 8
-	SnapshotIdLen	= 7
-	VolumeHrefLen	= 10
-	SnapshotHrefLen	= 12
+	VolumeMinComponents = 2
+	VolumeIdLen         = 6
+	VolumeHandleLen     = 8
+	SnapshotIdLen       = 7
+	VolumeHrefLen       = 10
+	SnapshotHrefLen     = 12
 )
 
 const (
-	BlockVolume	string = "lun"
-	MountVolume	= "mnt"
+	BlockVolume string = "lun"
+	MountVolume        = "mnt"
 )
 
 const (
 	ResourceNamePattern string = `^[a-zA-Z0-9_\-\.\:]+$`
-	ResourceNameLength  int  = 64
+	ResourceNameLength  int    = 64
 )
 
 // Volume ID
 // ---------
 // This structure is what identifies a volume (lun or filesystem).
 type VolumeId struct {
-	Type			string
-	Zfssa			string
-	Pool			string
-	Project			string
-	Name			string
+	Type    string
+	Zfssa   string
+	Pool    string
+	Project string
+	Name    string
 }
 
 func NewVolumeId(vType, zfssaName, pool, project, name string) *VolumeId {
 	return &VolumeId{
-		Type:	 vType,
-		Zfssa:	 zfssaName,
-		Pool:	 pool,
+		Type:    vType,
+		Zfssa:   zfssaName,
+		Pool:    pool,
 		Project: project,
-		Name:	 name,
+		Name:    name,
 	}
 }
 
@@ -59,7 +60,7 @@ func VolumeIdStringFromHref(zfssa, hRef string) (string, error) {
 	result := strings.Split(hRef, "/")
 	if len(result) < VolumeHrefLen {
 		return "", status.Errorf(codes.NotFound,
-			"Volume ID (%s) contains insufficient components (%d)",hRef, VolumeHrefLen)
+			"Volume ID (%s) contains insufficient components (%d)", hRef, VolumeHrefLen)
 	}
 
 	var vType string
@@ -69,7 +70,7 @@ func VolumeIdStringFromHref(zfssa, hRef string) (string, error) {
 	case "luns":
 		vType = BlockVolume
 	default:
-		return "", status.Errorf(codes.NotFound,"Invalid snapshot href (%s)", hRef)
+		return "", status.Errorf(codes.NotFound, "Invalid snapshot href (%s)", hRef)
 	}
 
 	return fmt.Sprintf("/%v/%v/%v/%v/%v",
@@ -82,6 +83,12 @@ func VolumeIdStringFromHref(zfssa, hRef string) (string, error) {
 
 func VolumeIdFromString(volumeId string) (*VolumeId, error) {
 	result := strings.Split(volumeId, "/")
+
+	if len(result) < VolumeMinComponents {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"Volume ID/Handle (%s) contains insufficient components to continue handling (%d)",
+			volumeId, VolumeMinComponents)
+	}
 
 	var pool, project, share string
 	switch result[1] {
@@ -116,11 +123,11 @@ func VolumeIdFromString(volumeId string) (*VolumeId, error) {
 	}
 
 	return &VolumeId{
-		Type:	 result[1],
+		Type:    result[1],
 		Zfssa:   result[2],
-		Pool:	 pool,
+		Pool:    pool,
 		Project: project,
-		Name:	 share,
+		Name:    share,
 	}, nil
 }
 
@@ -130,8 +137,10 @@ func (zvi *VolumeId) String() string {
 
 func (zvi *VolumeId) IsBlock() bool {
 	switch zvi.Type {
-	case BlockVolume: return true
-	case MountVolume: return false
+	case BlockVolume:
+		return true
+	case MountVolume:
+		return false
 	}
 	return false
 }
@@ -140,14 +149,14 @@ func (zvi *VolumeId) IsBlock() bool {
 // -----------
 // This structure is what identifies a volume (lun or filesystem).
 type SnapshotId struct {
-	VolumeId		*VolumeId
-	Name			string
+	VolumeId *VolumeId
+	Name     string
 }
 
 func NewSnapshotId(volumeId *VolumeId, snapshotName string) *SnapshotId {
 	return &SnapshotId{
 		VolumeId: volumeId,
-		Name:	 snapshotName,
+		Name:     snapshotName,
 	}
 }
 
@@ -161,23 +170,23 @@ func SnapshotIdFromString(snapshotId string) (*SnapshotId, error) {
 
 	return &SnapshotId{
 		VolumeId: &VolumeId{
-			Type: result[1],
-			Zfssa: result[2],
-			Pool: result[3],
+			Type:    result[1],
+			Zfssa:   result[2],
+			Pool:    result[3],
 			Project: result[4],
-			Name: result[5] },
-		Name: result[6] }, nil
+			Name:    result[5]},
+		Name: result[6]}, nil
 }
 
 func SnapshotIdFromHref(zfssa, hRef string) (*SnapshotId, error) {
 	result := strings.Split(hRef, "/")
 	if len(result) < SnapshotHrefLen {
 		return nil, status.Errorf(codes.NotFound,
-			"Snapshot ID (%s) contains insufficient components (%d)",hRef, SnapshotHrefLen)
+			"Snapshot ID (%s) contains insufficient components (%d)", hRef, SnapshotHrefLen)
 	}
 
 	if result[10] != "snapshots" {
-		return nil, status.Errorf(codes.NotFound,"Invalid snapshot href (%s)", hRef)
+		return nil, status.Errorf(codes.NotFound, "Invalid snapshot href (%s)", hRef)
 	}
 
 	var vType string
@@ -187,28 +196,28 @@ func SnapshotIdFromHref(zfssa, hRef string) (*SnapshotId, error) {
 	case "luns":
 		vType = BlockVolume
 	default:
-		return nil, status.Errorf(codes.NotFound,"Invalid snapshot href (%s)", hRef)
+		return nil, status.Errorf(codes.NotFound, "Invalid snapshot href (%s)", hRef)
 	}
 
 	return &SnapshotId{
 		VolumeId: &VolumeId{
-			Type: vType,
-			Zfssa: zfssa,
-			Pool: result[5],
+			Type:    vType,
+			Zfssa:   zfssa,
+			Pool:    result[5],
 			Project: result[7],
-			Name: result[9] },
-		Name: result[11] }, nil
+			Name:    result[9]},
+		Name: result[11]}, nil
 }
 
 func SnapshotIdStringFromHref(zfssa, hRef string) (string, error) {
 	result := strings.Split(hRef, "/")
 	if len(result) < SnapshotHrefLen {
 		return "", status.Errorf(codes.NotFound,
-			"Snapshot ID (%s) contains insufficient components (%d)",hRef, SnapshotHrefLen)
+			"Snapshot ID (%s) contains insufficient components (%d)", hRef, SnapshotHrefLen)
 	}
 
 	if result[10] != "snapshots" {
-		return "", status.Errorf(codes.NotFound,"Invalid snapshot href (%s)", hRef)
+		return "", status.Errorf(codes.NotFound, "Invalid snapshot href (%s)", hRef)
 	}
 
 	var vType string
@@ -218,7 +227,7 @@ func SnapshotIdStringFromHref(zfssa, hRef string) (string, error) {
 	case "luns":
 		vType = BlockVolume
 	default:
-		return "", status.Errorf(codes.NotFound,"Invalid snapshot href (%s)", hRef)
+		return "", status.Errorf(codes.NotFound, "Invalid snapshot href (%s)", hRef)
 	}
 
 	return fmt.Sprintf("/%v/%v/%v/%v/%v/%v",
@@ -247,15 +256,15 @@ func (zsi *SnapshotId) GetVolumeId() *VolumeId {
 func DateToUnix(date string) (*timestamp.Timestamp, error) {
 	year, err := strconv.Atoi(date[0:4])
 	if err == nil {
-		month, err :=  strconv.Atoi(date[5:7])
+		month, err := strconv.Atoi(date[5:7])
 		if err == nil {
-			day, err :=  strconv.Atoi(date[8:10])
+			day, err := strconv.Atoi(date[8:10])
 			if err == nil {
-				hour, err :=  strconv.Atoi(date[11:13])
+				hour, err := strconv.Atoi(date[11:13])
 				if err == nil {
-					min, err :=  strconv.Atoi(date[14:16])
+					min, err := strconv.Atoi(date[14:16])
 					if err == nil {
-						sec, err :=  strconv.Atoi(date[17:19])
+						sec, err := strconv.Atoi(date[17:19])
 						if err == nil {
 							seconds := time.Date(year, time.Month(month), day, hour, min, sec,
 								0, time.Local).Unix()

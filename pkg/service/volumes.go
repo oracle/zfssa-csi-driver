@@ -1,14 +1,14 @@
 /*
- * Copyright (c) 2021, 2022, Oracle.
+ * Copyright (c) 2021, 2024, Oracle.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
 package service
 
 import (
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/oracle/zfssa-csi-driver/pkg/utils"
 	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
-	"github.com/container-storage-interface/spec/lib/go/csi"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -58,7 +58,7 @@ import (
 // volume source.
 //
 
-type volumeState	int
+type volumeState int
 
 const (
 	stateCreating volumeState = iota
@@ -71,7 +71,7 @@ type zVolumeInterface interface {
 	create(ctx context.Context, token *zfssarest.Token,
 		req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error)
 	delete(ctx context.Context, token *zfssarest.Token,
-		) (*csi.DeleteVolumeResponse, error)
+	) (*csi.DeleteVolumeResponse, error)
 	controllerPublishVolume(ctx context.Context, token *zfssarest.Token,
 		req *csi.ControllerPublishVolumeRequest, nodeName string) (*csi.ControllerPublishVolumeResponse, error)
 	controllerUnpublishVolume(ctx context.Context, token *zfssarest.Token,
@@ -92,6 +92,8 @@ type zVolumeInterface interface {
 		req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error)
 	cloneSnapshot(ctx context.Context, token *zfssarest.Token,
 		req *csi.CreateVolumeRequest, zsnap *zSnapshot) (*csi.CreateVolumeResponse, error)
+	cloneVolume(ctx context.Context, token *zfssarest.Token,
+		req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error)
 	getDetails(ctx context.Context, token *zfssarest.Token) (int, error)
 	setInfo(volInfo interface{})
 	getSnapshotsList(context.Context, *zfssarest.Token) ([]*csi.ListSnapshotsResponse_Entry, error)
@@ -107,20 +109,18 @@ type zVolumeInterface interface {
 	isBlock() bool
 }
 
-
 // This method must be called when the possibility of the volume not existing yet exists.
 // The following 3 scenarios are possible:
 //
-//	* The volume doesn't exists yet or it exists in the appliance but is not in the
-//	  volume cache yet. Either way, a structure representing the volume is created
-//	  in the stateCreating state, stored in the cache and a reference returned to the
-//	  caller.
-//	* A structure representing the volume already exists in the cache and is in the
-//	  stateCreated state. A reference is returned to the caller.
-//	* A structure representing the volume already exists in the cache and is NOT in
-//	  the stateCreated state. This means the CO probably lost state and submitted multiple
-//	  simultaneous requests for this volume. In this case an error is returned.
-//
+//   - The volume doesn't exists yet or it exists in the appliance but is not in the
+//     volume cache yet. Either way, a structure representing the volume is created
+//     in the stateCreating state, stored in the cache and a reference returned to the
+//     caller.
+//   - A structure representing the volume already exists in the cache and is in the
+//     stateCreated state. A reference is returned to the caller.
+//   - A structure representing the volume already exists in the cache and is NOT in
+//     the stateCreated state. This means the CO probably lost state and submitted multiple
+//     simultaneous requests for this volume. In this case an error is returned.
 func (zd *ZFSSADriver) newVolume(ctx context.Context, pool, project, name string,
 	block bool) (zVolumeInterface, error) {
 
@@ -138,7 +138,7 @@ func (zd *ZFSSADriver) newVolume(ctx context.Context, pool, project, name string
 	zvol := zd.vCache.lookup(ctx, name)
 	if zvol != nil {
 		// Volume already known.
-		utils.GetLogCTRL(ctx, 5).Println("zd.newVolume", "request", )
+		utils.GetLogCTRL(ctx, 5).Println("zd.newVolume", "request")
 		zvol.hold(ctx)
 		zd.vCache.Unlock(ctx)
 		if zvol.lock(ctx) != stateCreated {
@@ -165,7 +165,8 @@ func (zd *ZFSSADriver) lookupVolume(ctx context.Context, token *zfssarest.Token,
 
 	vid, err := utils.VolumeIdFromString(volumeId)
 	if err != nil {
-		return nil, err
+		utils.GetLogCTRL(ctx, 2).Println("Failed to get volumeId from String", err.Error())
+		return nil, status.Errorf(codes.NotFound, "Volume (%s) not found", volumeId)
 	}
 
 	// Check first in the list of volumes if the volume is already known.
@@ -192,21 +193,21 @@ func (zd *ZFSSADriver) lookupVolume(ctx context.Context, token *zfssarest.Token,
 	}
 
 	switch zvol.getState() {
-	case stateCreating:	// We check with the appliance.
+	case stateCreating: // We check with the appliance.
 		httpStatus, err := zvol.getDetails(ctx, token)
 		if err != nil {
 			zd.releaseVolume(ctx, zvol)
 			if httpStatus == http.StatusNotFound {
-				return nil, status.Error(codes.NotFound, "Volume (%s) not found")
+				return nil, status.Errorf(codes.NotFound, "Volume (%s) not found", volumeId)
 			}
 			return nil, err
 		}
 		return zvol, nil
-	case stateCreated:	// Another Goroutine beat us to it.
+	case stateCreated: // Another Goroutine beat us to it.
 		return zvol, nil
 	default:
 		zd.releaseVolume(ctx, zvol)
-		return nil, status.Error(codes.NotFound, "Volume (%s) not found")
+		return nil, status.Errorf(codes.NotFound, "Volume (%s) not found", volumeId)
 	}
 }
 
@@ -232,15 +233,16 @@ func (zd *ZFSSADriver) releaseVolume(ctx context.Context, zvol zVolumeInterface)
 // If a snapshot with the passed in name already exists, it is returned. If it doesn't exist,
 // a new snapshot structure is created and returned. This method could fail or reasons:
 //
-//		1)	A snapshot with the passed in name already exists but the volume source
-//			is not the volume source passed in.
-//		2)	A snapshot with the passed in name already exists but is not in the stateCreated
-//			state (or stable state). As for volumes, This would mean the CO lost state and
-//			issued simultaneous requests for the same snapshot.
+//  1. A snapshot with the passed in name already exists but the volume source
+//     is not the volume source passed in.
 //
-//	If the call is successful, that caller has exclusive access to the snapshot and its volume
-//	source. When the snapshot returned is not needed anymore, the method releaseSnapshot()
-//	must be called.
+//  2. A snapshot with the passed in name already exists but is not in the stateCreated
+//     state (or stable state). As for volumes, This would mean the CO lost state and
+//     issued simultaneous requests for the same snapshot.
+//
+//     If the call is successful, that caller has exclusive access to the snapshot and its volume
+//     source. When the snapshot returned is not needed anymore, the method releaseSnapshot()
+//     must be called.
 func (zd *ZFSSADriver) newSnapshot(ctx context.Context, token *zfssarest.Token,
 	name, sourceId string) (*zSnapshot, error) {
 
@@ -287,13 +289,13 @@ func (zd *ZFSSADriver) newSnapshot(ctx context.Context, token *zfssarest.Token,
 // exclusive access to the returned snapshot and its volume source. This method could fail
 // for the following reasons:
 //
-//		1)	The source volume cannot be found locally or in the appliance.
-//		2)	The snapshot exists but is in an unstable state. This would mean the
-//			CO lost state and issued multiple simultaneous requests for the same
-//			snapshot.
-//		3)	There's an inconsistency between what the appliance thinks the volume
-//			source is and what the existing snapshot says it is (a panic is issued).
-//		4)	The snapshot cannot be found locally or in the appliance.
+//  1. The source volume cannot be found locally or in the appliance.
+//  2. The snapshot exists but is in an unstable state. This would mean the
+//     CO lost state and issued multiple simultaneous requests for the same
+//     snapshot.
+//  3. There's an inconsistency between what the appliance thinks the volume
+//     source is and what the existing snapshot says it is (a panic is issued).
+//  4. The snapshot cannot be found locally or in the appliance.
 func (zd *ZFSSADriver) lookupSnapshot(ctx context.Context, token *zfssarest.Token,
 	snapshotId string) (*zSnapshot, error) {
 
@@ -344,14 +346,14 @@ func (zd *ZFSSADriver) lookupSnapshot(ctx context.Context, token *zfssarest.Toke
 	}
 
 	switch zsnap.getState() {
-	case stateCreating:	// We check with the appliance.
+	case stateCreating: // We check with the appliance.
 		_, err = zsnap.getDetails(ctx, token)
 		if err != nil {
 			zd.releaseSnapshot(ctx, zsnap)
 			return nil, err
 		}
 		return zsnap, nil
-	case stateCreated:	// Another Goroutine beat us to it.
+	case stateCreated: // Another Goroutine beat us to it.
 		return zsnap, nil
 	default:
 		zd.releaseSnapshot(ctx, zsnap)
@@ -364,6 +366,7 @@ func (zd *ZFSSADriver) lookupSnapshot(ctx context.Context, token *zfssarest.Toke
 // a reference to the source volume and exclusive access to it. The volume source
 // is also released.
 func (zd *ZFSSADriver) releaseSnapshot(ctx context.Context, zsnap *zSnapshot) {
+	utils.GetLogCTRL(ctx, 5).Println("zd.releaseSnapshot", "zsnap", zsnap)
 	zvol := zsnap.getSourceVolume()
 	zd.sCache.RLock(ctx)
 	refCount, state := zsnap.release(ctx)
@@ -396,8 +399,8 @@ func (zd *ZFSSADriver) getVolumesList(ctx context.Context) ([]*csi.ListVolumesRe
 	for _, zvol := range zd.vCache.vHash {
 		entry := new(csi.ListVolumesResponse_Entry)
 		entry.Volume = &csi.Volume{
-			VolumeId:		zvol.getVolumeID().String(),
-			CapacityBytes:	zvol.getCapacity(),
+			VolumeId:      zvol.getVolumeID().String(),
+			CapacityBytes: zvol.getCapacity(),
 		}
 		entries = append(entries, entry)
 	}
@@ -414,8 +417,8 @@ func (zd *ZFSSADriver) updateVolumeList(ctx context.Context) error {
 	lunChan := make(chan error)
 	go zd.updateFilesystemList(ctx, fsChan)
 	go zd.updateLunList(ctx, lunChan)
-	errfs := <- fsChan
-	errlun := <- lunChan
+	errfs := <-fsChan
+	errlun := <-lunChan
 
 	if errfs != nil {
 		return errfs
@@ -494,12 +497,12 @@ func (zd *ZFSSADriver) getSnapshotList(ctx context.Context) ([]*csi.ListSnapshot
 	entries := make([]*csi.ListSnapshotsResponse_Entry, 0, len(zd.sCache.sHash))
 	for _, zsnap := range zd.sCache.sHash {
 		entry := new(csi.ListSnapshotsResponse_Entry)
-		entry.Snapshot = &csi.Snapshot {
-			SizeBytes: zsnap.getSize(),
-			SnapshotId: zsnap.getStringId(),
+		entry.Snapshot = &csi.Snapshot{
+			SizeBytes:      zsnap.getSize(),
+			SnapshotId:     zsnap.getStringId(),
 			SourceVolumeId: zsnap.getStringSourceId(),
-			CreationTime: zsnap.getCreationTime(),
-			ReadyToUse: zsnap.getState() == stateCreated,
+			CreationTime:   zsnap.getCreationTime(),
+			ReadyToUse:     zsnap.getState() == stateCreated,
 		}
 		entries = append(entries, entry)
 	}
@@ -528,16 +531,22 @@ func (zd *ZFSSADriver) updateSnapshotList(ctx context.Context) error {
 	}
 
 	for _, snapInfo := range snapList {
+		utils.GetLogCTRL(ctx, 5).Println("zd.updateSnapshotList", "snapshotInfo", snapInfo)
 		sid, err := utils.SnapshotIdFromHref(token.Name, snapInfo.Href)
 		if err != nil {
+			utils.GetLogCTRL(ctx, 2).Println("zd.updateSnapshotList snapshotIdFromHref", "err", err)
 			continue
 		}
+		utils.GetLogCTRL(ctx, 2).Println("zd.updateSnapshotList newSnapshot")
 		zsnap, err := zd.newSnapshot(ctx, token, snapInfo.Name, sid.VolumeId.String())
 		if err != nil {
+			utils.GetLogCTRL(ctx, 2).Println("zd.updateSnapshotList newSnapshot", "err", err)
 			continue
 		}
+		utils.GetLogCTRL(ctx, 2).Println("zd.updateSnapshotList setInfo")
 		err = zsnap.setInfo(&snapInfo)
 		if err != nil {
+			utils.GetLogCTRL(ctx, 2).Println("zd.updateSnapshotList setInfo", "err", err)
 			continue
 		}
 		zd.releaseSnapshot(ctx, zsnap)
@@ -581,8 +590,8 @@ func compareCapabilities(req []*csi.VolumeCapability, cur []csi.VolumeCapability
 }
 
 type volumeHashTable struct {
-	vMutex	sync.RWMutex
-	vHash	map[string]zVolumeInterface
+	vMutex sync.RWMutex
+	vHash  map[string]zVolumeInterface
 }
 
 func (h *volumeHashTable) add(ctx context.Context, key string, zvol zVolumeInterface) {
@@ -614,8 +623,8 @@ func (h *volumeHashTable) RUnlock(ctx context.Context) {
 }
 
 type snapshotHashTable struct {
-	sMutex	sync.RWMutex
-	sHash	map[string]*zSnapshot
+	sMutex sync.RWMutex
+	sHash  map[string]*zSnapshot
 }
 
 func (h *snapshotHashTable) add(ctx context.Context, key string, zsnap *zSnapshot) {
