@@ -6,10 +6,10 @@
 package service
 
 import (
-	"github.com/oracle/zfssa-csi-driver/pkg/utils"
-	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
+	"github.com/oracle/zfssa-csi-driver/pkg/utils"
+	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	// the current controller service accessModes supported
+	// controller service capabilities supported
 	controllerCaps = []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
@@ -26,6 +26,7 @@ var (
 		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
 		csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
+		csi.ControllerServiceCapability_RPC_CLONE_VOLUME,
 	}
 )
 
@@ -51,6 +52,7 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 		return nil, err
 	}
 
+	// TODO: check if pool/project are populated if the storage class is left out on volume clone
 	parameters := req.GetParameters()
 	pool := parameters["pool"]
 	project := parameters["project"]
@@ -59,17 +61,29 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 	if err != nil {
 		return nil, err
 	}
-	defer 	zd.releaseVolume(ctx, zvol)
+	defer zd.releaseVolume(ctx, zvol)
 
 	if volumeContentSource := req.GetVolumeContentSource(); volumeContentSource != nil {
-		if snapshot := volumeContentSource.GetSnapshot(); snapshot != nil {
+		switch volumeContentSource.Type.(type) {
+		case *csi.VolumeContentSource_Snapshot:
+			snapshot := volumeContentSource.GetSnapshot()
+			utils.GetLogCTRL(ctx, 5).Println("CreateSnapshot", "request", snapshot)
 			zsnap, err := zd.lookupSnapshot(ctx, token, snapshot.GetSnapshotId())
 			if err != nil {
 				return nil, err
 			}
-			defer 	zd.releaseSnapshot(ctx, zsnap)
+			defer zd.releaseSnapshot(ctx, zsnap)
 			return zvol.cloneSnapshot(ctx, token, req, zsnap)
+		case *csi.VolumeContentSource_Volume:
+			volume := volumeContentSource.GetVolume()
+			utils.GetLogCTRL(ctx, 5).Println("CreateVolumeClone", "request", volume)
+			// clone creation is complex, delegate out to it
+			return zvol.clone(ctx, token, req)
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "%v type not implemented in driver",
+				volumeContentSource.GetType())
 		}
+
 		return nil, status.Error(codes.InvalidArgument, "Only snapshots are supported as content source")
 	} else {
 		return zvol.create(ctx, token, req)
@@ -91,9 +105,8 @@ func getVolumeSize(capRange *csi.CapacityRange) int64 {
 
 // Check whether the access mode of the volume to create is "block" or "filesystem"
 //
-//		true	block access mode
-//		false	filesystem access mode
-//
+//	true	block access mode
+//	false	filesystem access mode
 func isBlock(capabilities []*csi.VolumeCapability) bool {
 	for _, capacity := range capabilities {
 		if capacity.GetBlock() == nil {
@@ -104,7 +117,6 @@ func isBlock(capabilities []*csi.VolumeCapability) bool {
 }
 
 // Validates as much of the "create volume request" as possible
-//
 func validateCreateVolumeReq(ctx context.Context, token *zfssarest.Token, req *csi.CreateVolumeRequest) error {
 
 	log5 := utils.GetLogCTRL(ctx, 5)
@@ -149,7 +161,7 @@ func validateCreateVolumeReq(ctx context.Context, token *zfssarest.Token, req *c
 	}
 
 	if pool.Status != "online" && pool.Status != "degraded" {
-		log5.Println("Pool not ready",  "State", pool.Status)
+		log5.Println("Pool not ready", "State", pool.Status)
 		return status.Errorf(codes.InvalidArgument, "pool %s in an error state (%s)", poolName, pool.Status)
 	}
 
@@ -239,7 +251,7 @@ func (zd *ZFSSADriver) ControllerPublishVolume(ctx context.Context, req *csi.Con
 		return nil, status.Error(codes.InvalidArgument, "Capability not provided")
 	}
 
-	nodeName, err := GetNodeName(nodeID)
+	nodeName, err := GetNodeName(ctx, nodeID)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Node (%s) was not found: %v", req.NodeId, err)
 	}
@@ -378,7 +390,7 @@ func (zd *ZFSSADriver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequ
 
 	rsp := &csi.ListVolumesResponse{
 		NextToken: nextToken,
-		Entries: entries,
+		Entries:   entries,
 	}
 
 	return rsp, nil
@@ -387,7 +399,7 @@ func (zd *ZFSSADriver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequ
 func (zd *ZFSSADriver) GetCapacity(ctx context.Context, req *csi.GetCapacityRequest) (
 	*csi.GetCapacityResponse, error) {
 
-	utils.GetLogCTRL(ctx,5).Println("GetCapacity", "request", protosanitizer.StripSecrets(req))
+	utils.GetLogCTRL(ctx, 5).Println("GetCapacity", "request", protosanitizer.StripSecrets(req))
 
 	reqCaps := req.GetVolumeCapabilities()
 	if len(reqCaps) > 0 {
@@ -448,14 +460,14 @@ func (zd *ZFSSADriver) GetCapacity(ctx context.Context, req *csi.GetCapacityRequ
 		}
 		availableCapacity = project.SpaceAvailable
 	}
-	
+
 	return &csi.GetCapacityResponse{AvailableCapacity: availableCapacity}, nil
 }
 
 func (zd *ZFSSADriver) ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest) (
 	*csi.ControllerGetCapabilitiesResponse, error) {
 
-	utils.GetLogCTRL(ctx,5).Println("ControllerGetCapabilities",
+	utils.GetLogCTRL(ctx, 5).Println("ControllerGetCapabilities",
 		"request", protosanitizer.StripSecrets(req))
 
 	var caps []*csi.ControllerServiceCapability
@@ -501,7 +513,7 @@ func (zd *ZFSSADriver) CreateSnapshot(ctx context.Context, req *csi.CreateSnapsh
 func (zd *ZFSSADriver) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapshotRequest) (
 	*csi.DeleteSnapshotResponse, error) {
 
-	utils.GetLogCTRL(ctx, 5).Println("DeleteSnapshot",	"request", protosanitizer.StripSecrets(req))
+	utils.GetLogCTRL(ctx, 5).Println("DeleteSnapshot", "request", protosanitizer.StripSecrets(req))
 
 	if len(req.GetSnapshotId()) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no snapshot ID provided")
@@ -577,11 +589,11 @@ func (zd *ZFSSADriver) ListSnapshots(ctx context.Context, req *csi.ListSnapshots
 		if err == nil {
 			entry := new(csi.ListSnapshotsResponse_Entry)
 			entry.Snapshot = &csi.Snapshot{
-				SnapshotId: zsnap.id.String(),
-				SizeBytes: zsnap.getSize(),
+				SnapshotId:     zsnap.id.String(),
+				SizeBytes:      zsnap.getSize(),
 				SourceVolumeId: zsnap.getStringSourceId(),
-				CreationTime: zsnap.getCreationTime(),
-				ReadyToUse: true,
+				CreationTime:   zsnap.getCreationTime(),
+				ReadyToUse:     true,
 			}
 			zd.releaseSnapshot(ctx, zsnap)
 			utils.GetLogCTRL(ctx, 5).Println("ListSnapshots with snapshot ID", "Snapshot", zsnap.getHref())
@@ -623,7 +635,7 @@ func (zd *ZFSSADriver) ListSnapshots(ctx context.Context, req *csi.ListSnapshots
 
 	rsp := &csi.ListSnapshotsResponse{
 		NextToken: nextToken,
-		Entries: entries,
+		Entries:   entries,
 	}
 
 	return rsp, nil
@@ -657,6 +669,44 @@ func (zd *ZFSSADriver) ControllerExpandVolume(ctx context.Context, req *csi.Cont
 	defer zd.releaseVolume(ctx, zvol)
 
 	return zvol.controllerExpandVolume(ctx, token, req)
+}
+
+func (zd *ZFSSADriver) ControllerGetVolume(ctx context.Context, req *csi.ControllerGetVolumeRequest) (
+	*csi.ControllerGetVolumeResponse, error) {
+
+	utils.GetLogCTRL(ctx, 5).Println("ControllerGetVolume", "request", protosanitizer.StripSecrets(req))
+
+	log2 := utils.GetLogCTRL(ctx, 2)
+
+	volumeID := req.GetVolumeId()
+	if len(volumeID) == 0 {
+		log2.Println("Volume ID not provided, will return")
+		return nil, status.Error(codes.InvalidArgument, "Volume ID not provided")
+	}
+
+	// req does not contain a secret map
+	user, password, err := zd.getUserLogin(ctx, nil)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
+	}
+	token := zfssarest.LookUpToken(user, password)
+
+	zvol, err := zd.lookupVolume(ctx, token, volumeID)
+	if err != nil {
+		log2.Println("ControllerGetVolume request failed, bad VolumeId",
+			"volume_id", volumeID, "error", err.Error())
+		return nil, err
+	}
+	defer zd.releaseVolume(ctx, zvol)
+
+	return &csi.ControllerGetVolumeResponse{
+		Volume: &csi.Volume{
+			VolumeId:      volumeID,
+			CapacityBytes: zvol.getCapacity(),
+		},
+		// VolumeStatus is not required if LIST_VOLUMES_PUBLISHED_NODES and VOLUME_CONDITION
+		//	are not implemented
+	}, nil
 }
 
 // Check the secrets map (typically in a request context) for a change in the username

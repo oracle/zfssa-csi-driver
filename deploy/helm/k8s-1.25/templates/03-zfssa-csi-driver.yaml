@@ -2,7 +2,7 @@
 # are needed only because of condition explained in
 # https://github.com/kubernetes/kubernetes/issues/69608
 ---
-apiVersion: storage.k8s.io/v1beta1
+apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
   name: zfssa-csi-driver
@@ -55,6 +55,15 @@ spec:
             - name: registration-dir
               mountPath: /registration
 
+        - name: liveness-probe
+          imagePullPolicy: Always
+          image: {{ .Values.image.sidecarBase }}{{ .Values.images.csiLivenessProbe.name }}:{{ .Values.images.csiLivenessProbe.tag }}
+          args:
+            - --csi-address=/plugin/csi.sock
+          volumeMounts:
+            - mountPath: {{ .Values.paths.pluginDir.mountPath }}
+              name: socket-dir
+
         - name: zfssabs
           image: {{ .Values.image.zfssaBase }}{{ .Values.images.zfssaCsiDriver.name }}:{{ .Values.images.zfssaCsiDriver.tag }}
           args:
@@ -87,6 +96,18 @@ spec:
           imagePullPolicy:  {{ .Values.image.pullPolicy }}
           securityContext:
             privileged: true
+          ports:
+          - containerPort: 9808
+            name: healthz
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 2
           volumeMounts:
             - name: socket-dir
               mountPath: {{ .Values.paths.pluginDir.mountPath }}

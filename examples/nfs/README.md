@@ -23,7 +23,7 @@ customize are:
 
 Check out the parameters section of the storage class configuration file (storage-class.yaml) 
 to see all supporting properties. Refer to NFS Protocol page of Oracle ZFS Storage Appliance
-Administration Guide how to defind the values properly.
+Administration Guide how to define the values properly.
 
 ## Deployment
 
@@ -71,7 +71,7 @@ Once deployed, verify each of the created entities using kubectl:
 Once the pod is deployed, for demo, start the following analytics in a worksheet on
 the Oracle ZFS Storage Appliance that is hosting the target filesystems:
 
-Exec into the pod and write some data to the block volume:
+Exec into the pod and write some data to the volume:
 ```yaml
 kubectl exec -it zfssa-nfs-example-pod -- /bin/sh
 / # cd /mnt

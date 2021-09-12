@@ -53,26 +53,22 @@ Ensure the following information and requirements can be met prior to installati
     Container Runtime will likely try to pull them. If your Container Runtime cannot access the images you will have to
     pull them manually before deployment. The required images are: 
 
-    * node-driver-registar v2.0.0+.
-    * external-attacher v3.0.2+.
-    * external-provisioner v2.0.5+.
-    * external-resizer v1.1.0+.
-    * external-snapshotter v3.0.3+.
+    * node-driver-registar v2.7.0+.
+    * external-attacher v4.1.0+.
+    * external-provisioner v3.4.0+.
+    * external-resizer v1.7.0+.
+    * external-snapshotter v6.2.1+.
 
-    The common container images for those images are:
-    
-    * k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.0.0  
-    * k8s.gcr.io/sig-storage/csi-attacher:v3.0.2
-    * k8s.gcr.io/sig-storage/csi-provisioner:v2.0.5 
-    * k8s.gcr.io/sig-storage/csi-resizer:v1.1.0 
-    * k8s.gcr.io/sig-storage/csi-snapshotter:v3.0.3 
+    The current deployment uses the sidecar images built by Oracle and available
+    from the Oracle Container Registry (container-registry.oracle.com/olcne/).
+    Refer to the [current deployment for more information](deploy/helm/k8s-1.25/values.yaml).
     
 * Plugin image
 
     You can pull the plugin image from a registry that you know hosts it or you can generate it and store it in one of
     your registries. In any case, as for the sidecar images, the Container Runtime must have access to that registry.
     If not you will have to pull it manually before deployment. If you choose to generate the plugin yourself use
-    version 1.13.8 or above of the Go compiler.
+    version 1.21.0 or above of the Go compiler.
 
 ## Setup
 

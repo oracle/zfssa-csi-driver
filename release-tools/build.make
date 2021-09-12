@@ -26,7 +26,7 @@ IMAGE_NAME=$(REGISTRY_NAME)/$*
 
 build-%:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$* ./cmd/$*
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$* ./cmd/$*
 
 container-%: build-%
 	$(CONTAINER_BUILD) build -t $*:latest -f $(shell if [ -e ./cmd/zfssa-csi-driver/$*/Dockerfile ]; then echo ./cmd/zfssa-csi-driver/$*/Dockerfile; else echo Dockerfile; fi) --label revision=$(REV) . --build-arg var_proxy=$(CONTAINER_PROXY)

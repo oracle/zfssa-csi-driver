@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.podNfsName }}-0
+  labels:
+    name: ol7slim-test
+spec:
+  restartPolicy: Always
+  containers:
+    - image: container-registry.oracle.com/os/oraclelinux:7-slim
+      command: ["/bin/sh", "-c"]
+      args: [ "tail -f /dev/null" ]
+      name: ol7slim
+      volumeMounts:
+        - name: vol
+          mountPath: /mnt
+  volumes:
+    - name: vol
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvcNfsName }}-0
+        readOnly: false
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.podNfsName }}-1
+  labels:
+    name: ol7slim-test
+spec:
+  restartPolicy: Always
+  containers:
+    - image: container-registry.oracle.com/os/oraclelinux:7-slim
+      command: ["/bin/sh", "-c"]
+      args: [ "tail -f /dev/null" ]
+      name: ol7slim
+      volumeMounts:
+        - name: vol
+          mountPath: /mnt
+  volumes:
+    - name: vol
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvcNfsName }}-1
+        readOnly: false
