@@ -21,23 +21,16 @@ customize are:
   * targetGroup: the target iSCSI group to use on the appliance
 * volSize: the size of the iSCSI LUN share to create
 
-## Enabling Volume Snapshot Feature (Only for Kubernetes v1.17 - v1.19)
-
-The Kubernetes Volume Snapshot feature became GA in Kubernetes v1.20. In order to use
-this feature in Kubernetes pre-v1.20, it MUST be enabled prior to deploying ZS CSI Driver. 
-To enable the feature on Kubernetes pre-v1.20, follow the instructions on 
-[INSTALLATION](../../INSTALLATION.md).
-
-## Deployment
+## Deployment of initial pod and volume
 
 This step includes deploying a pod with a block volume attached using a regular 
 storage class and a persistent volume claim. It also deploys a volume snapshot class
 required to take snapshots of the persistent volume.
 
-Assuming there is a set of values in the local-values directory, deploy using Helm 3:
+Assuming there is a set of values in the local-values directory, deploy using Helm:
 
 ```text
-helm ../install -f local-values/local-values.yaml zfssa-block-vsc ./
+helm install -f local-values/local-values.yaml zfssa-block-vsc ./block-snapshot-creator
 ```
 
 Once deployed, verify each of the created entities using kubectl:
@@ -53,13 +46,13 @@ Once deployed, verify each of the created entities using kubectl:
     The command `kubectl get pvc` should now return something similar to this:
     ```text
 	NAME                         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                AGE
-	zfssa-block-vs-example-pvc   Bound    pvc-477804b4-e592-4039-a77c-a1c99a1e537b   10Gi       RWO            zfssa-block-vs-example-sc   62s
+	zfssa-block-example-pvc      Bound    pvc-477804b4-e592-4039-a77c-a1c99a1e537b   10Gi       RWO            zfssa-block-vs-example-sc   62s
     ```
 3. Display the volume snapshot class
     The command `kubectl get volumesnapshotclass` should now return something similar to this:
     ```text
 	NAME                         DRIVER             DELETIONPOLICY   AGE
-	zfssa-block-vs-example-vsc   zfssa-csi-driver   Delete           100s
+	zfssa-block-example-vsc      zfssa-csi-driver   Delete           100s
     ```
 4. Display the pod mounting the volume
 
@@ -67,7 +60,7 @@ Once deployed, verify each of the created entities using kubectl:
     ```text
     NAME                         READY   STATUS    RESTARTS   AGE
     snapshot-controller-0        1/1     Running   0          14d
-    zfssa-block-vs-example-pod   1/1     Running   0          2m11s
+    zfssa-block-example-pod      1/1     Running   0          2m11s
     zfssa-csi-nodeplugin-7kj5m   2/2     Running   0          3m11s
     zfssa-csi-nodeplugin-rgfzf   2/2     Running   0          3m11s
     zfssa-csi-provisioner-0      4/4     Running   0          3m11s
@@ -78,7 +71,7 @@ Once deployed, verify each of the created entities using kubectl:
 Once the pod is deployed, verify the block volume is mounted and can be written. 
 
 ```text
-kubectl exec -it zfssa-block-vs-example-pod -- /bin/sh
+kubectl exec -it zfssa-block-example-pod -- /bin/sh
 
 / # cd /dev
 /dev # 
@@ -93,13 +86,13 @@ Alternatively, `cat /dev/block` followed by `CTRL-C` can be used to view the tim
 
 ## Creating snapshot 
 
-Use configuration files in examples/block-snapshot directory with proper modifications 
+Use configuration files in examples/block-vsc/block-snapshot-user directory with proper modifications 
 for the rest of the example steps.
 
 Create a snapshot of the volume by running the command below:
 
 ```text
-kubectl apply -f ../block-snapshot/block-snapshot.yaml
+kubectl apply -f block-snapshot-user/block-snapshot.yaml
 ```
 
 Verify the volume snapshot is created and available by running the following command:
@@ -113,8 +106,8 @@ It is important to use the RESTORESIZE value of the volume snapshot just created
 the storage capacity of a persistent volume claim to provision a persistent volume using this
 snapshot. For example, the storage capacity in ../block-snapshot/block-pvc-from-snapshot.yaml
 
-Optionally, verify the volume snapshot exists on ZFS Storage Appliance. The snapshot name
-on ZFS Storage Appliance should have the volume snapshot UID as the suffix.
+Optionally, verify the volume snapshot exists on the Oracle ZFS Storage Appliance. The snapshot name
+on Oracle ZFS Storage Appliance should have the volume snapshot UID as the suffix.
 
 ## Creating persistent volume claim 
 
@@ -124,7 +117,7 @@ is not expandable. Create a new storage class with allowVolumeExpansion: true an
 specifying the persistent volume claim.
 
 ```text
-kubectl apply -f ../block-snapshot/block-pvc-from-snapshot.yaml
+kubectl apply -f block-snapshot-user/block-pvc-from-snapshot.yaml
 ```
 
 Verify the persistent volume claim is created and a volume is provisioned by running the following command:
@@ -140,11 +133,11 @@ persistentvolume/pvc-477804b4-e592-4039-a77c-a1c99a1e537b   10Gi       RWO      
 persistentvolume/pvc-91f949f6-5d77-4183-bab5-adfdb1452a90   10Gi       RWO            Delete           Bound    default/zfssa-block-vs-restore-pvc   zfssa-block-vs-example-sc            11s
 
 NAME                                               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                AGE
-persistentvolumeclaim/zfssa-block-vs-example-pvc   Bound    pvc-477804b4-e592-4039-a77c-a1c99a1e537b   10Gi       RWO            zfssa-block-vs-example-sc   13m
+persistentvolumeclaim/zfssa-block-example-pvc      Bound    pvc-477804b4-e592-4039-a77c-a1c99a1e537b   10Gi       RWO            zfssa-block-vs-example-sc   13m
 persistentvolumeclaim/zfssa-block-vs-restore-pvc   Bound    pvc-91f949f6-5d77-4183-bab5-adfdb1452a90   10Gi       RWO            zfssa-block-vs-example-sc   16s
 ```
 
-Optionally, verify the new volume exists on ZFS Storage Appliance. Notice that the new
+Optionally, verify the new volume exists on the Oracle ZFS Storage Appliance. Notice that the new
 volume is a clone off the snapshot taken from the original volume.
 
 ## Creating pod using restored volume
@@ -152,14 +145,14 @@ volume is a clone off the snapshot taken from the original volume.
 Create a pod with the persistent volume claim created from the above step by running the command below:
 
 ```text
-kubectl apply -f ../block-snapshot/block-pod-restored-volume.yaml
+kubectl apply -f block-snapshot-user/block-pod-restored-volume.yaml
 ```
 
 The command `kubectl get pod` should now return something similar to this:
 ```text
 NAME                         READY   STATUS    RESTARTS   AGE
 snapshot-controller-0        1/1     Running   0          14d
-zfssa-block-vs-example-pod   1/1     Running   0          15m
+zfssa-block-example-pod      1/1     Running   0          15m
 zfssa-block-vs-restore-pod   1/1     Running   0          21s
 zfssa-csi-nodeplugin-7kj5m   2/2     Running   0          16m
 zfssa-csi-nodeplugin-rgfzf   2/2     Running   0          16m
@@ -187,7 +180,12 @@ run the following commands below. Wait until the resources being deleted disappe
 the list that `kubectl get ...` command displays before running the next command.
 
 ```text
-kubectl delete -f ../block-snapshot/block-pod-restored-volume.yaml
-kubectl delete -f ../block-snapshot/block-pvc-from-snapshot.yaml
-kubectl delete -f ../block-snapshot/block-snapshot.yaml
+kubectl delete -f block-snapshot-user/block-pod-restored-volume.yaml
+kubectl delete -f block-snapshot-user/block-pvc-from-snapshot.yaml
+kubectl delete -f block-snapshot-user/block-snapshot.yaml
+```
+
+Uninstall the helm chart
+```text
+helm uninstall zfssa-block-vsc
 ```

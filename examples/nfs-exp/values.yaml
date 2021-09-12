@@ -3,6 +3,13 @@ scNfsName: zfssa-nfs-exp-example-sc
 pvcNfsName: zfssa-nfs-exp-example-pvc
 podNfsName: zfssa-nfs-exp-example-pod
 
+# Location for images used
+imageBase: container-registry.oracle.com/os/
+images:
+  os:
+    name: oraclelinux
+    tag: "7-slim"
+
 # Settings for target appliance
 appliance:
   volumeType: thin

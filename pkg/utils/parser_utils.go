@@ -6,10 +6,10 @@
 package utils
 
 import (
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
 )
 
 func GetValueFromYAML(yamlFilePath string, key string) (string, error) {
@@ -31,7 +31,7 @@ func GetValueFromYAML(yamlFilePath string, key string) (string, error) {
 	value, ok := yamlMap[key]
 	if !ok {
 		return "", errors.New(fmt.Sprintf("key: <%s> could not be retrieved from <%s> : <%s>",
-		     key, yamlFilePath, err))
+			key, yamlFilePath, err))
 	}
 	// Convert value to string and return
 	return fmt.Sprintf("%v", value), nil

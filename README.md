@@ -4,24 +4,26 @@ This plugin supports Oracle ZFS Storage Appliance
 as a backend for block storage (iSCSI volumes) and file storage (NFS).
 
 | CSI Plugin Version | Supported CSI Versions | Supported Kubernetes Versions | Persistence | Supported Access Modes | Dynamic Provisioning | Raw Block Support |
-| --- | --- | --- | --- | --- | --- | --- |
-| v1.0.0 | v1.0+ | v1.17.X+ | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
+|--------------------|------------------------|-------------------------------| --- | --- | --- | --- |
+| v1.0.0             | v1.0+                  | v1.17.X+                      | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
+| v1.1.0             | v1.6.0                 | v1.27.3+                      | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
+
 
 ## Requirements
 
-* Kubernetes v1.17 or above. 
-* A Container runtime implementing the Kubernetes Container Runtime Interface. This plugin was tested with CRI-O v1.17.
+* Kubernetes v1.27 or above (version may work on prior Kubernetes versions)
+* A Container runtime implementing the Kubernetes Container Runtime Interface.
 * An Oracle ZFS Storage Appliance running Appliance Kit Version 8.8 or above. This plugin may work with previous 
   versions but it is not tested with them. It is possible to use this 
-  driver with the [Oracle ZFS Storage Simulator](https://www.oracle.com/downloads/server-storage/sun-unified-storage-sun-simulator-downloads.html)
+  driver with the [Oracle ZFS Storage Marketplace Image on OCI](https://cloudmarketplace.oracle.com/marketplace/en_US/listing/122033460)
 * Access to both a management path and a data path for the target Oracle 
-  ZFS Storage Appiance (or simulator). The management and data path
-can be the same address.
+  ZFS Storage Appliance (or simulator). The management and data path
+  can be the same address.
 * A suitable container image build environment (podman or docker are accounted
   for in the makefile)
 
 ## Unsupported Functionality
-ZFS Storage Appliance CSI driver does not support the following functionality:
+Oracle ZFS Storage Constainer Storage Interface (CSI) driver does not support the following functionality:
 * Volume Cloning
 
 ## Building

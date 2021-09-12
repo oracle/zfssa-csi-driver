@@ -16,5 +16,5 @@ parameters:
   rootUser: {{ .Values.appliance.rootUser }}
   rootGroup: {{ .Values.appliance.rootGroup }}
   rootPermissions: "777"
-  shareNFS: "on"
+  shareNFS: {{ .Values.appliance.shareNFS }}
   restrictChown: "false"

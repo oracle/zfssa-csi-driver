@@ -8,6 +8,13 @@ pvc4: ssp-many
 podNfsMultiName: zfssa-nfs-multi-example-pod
 namespace: zfssa-nfs-multi
 
+# Location for images used
+imageBase: container-registry.oracle.com/os/
+images:
+  os:
+    name: oraclelinux
+    tag: "7-slim"
+
 # Settings for target appliance
 appliance:
   volumeType: thin

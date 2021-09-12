@@ -60,6 +60,9 @@ spec:
             - --csi-address=/plugin/csi.sock
             - --timeout=30s
             - --feature-gates=Topology=true
+          env:
+            - name: ADDRESS
+              value: /plugin/csi.sock
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             # This is necessary only for systems with SELinux, where
