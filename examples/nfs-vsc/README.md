@@ -8,6 +8,13 @@ Prior to running this example, the NFS environment must be set up properly
 on both the Kubernetes worker nodes and the Oracle ZFS Storage Appliance.
 Refer to the [INSTALLATION](../../INSTALLATION.md) instructions for details.
 
+There are two helm deployments in this example
+* [Create and use initial volume](./nfs-snapshot-creator)
+* [Create and use snapshot](./nfs-snapshot-creator)
+
+The values between the deployments have to be coordinated though a local values
+file or the defaults should work.
+
 ## Configuration
 
 Set up a local values files. It must contain the values that customize to the 
@@ -20,20 +27,14 @@ customize are:
   * nfsServer: the NFS data path IP address
 * volSize: the size of the filesystem share to create
 
-## Enabling Volume Snapshot Feature (Only for Kubernetes v1.17 - v1.19)
-
-The Kubernetes Volume Snapshot feature became GA in Kubernetes v1.20. In order to use
-this feature in Kubernetes pre-v1.20, it MUST be enabled prior to deploying ZS CSI Driver. 
-To enable the feature on Kubernetes pre-v1.20, follow the instructions on 
-[INSTALLATION](../../INSTALLATION.md).
-
 ## Deployment
 
 This step includes deploying a pod with an NFS volume attached using a regular 
 storage class and a persistent volume claim. It also deploys a volume snapshot class
 required to take snapshots of the persistent volume.
 
-Assuming there is a set of values in the local-values directory, deploy using Helm 3. If you plan to exercise creating volume from a snapshot with given yaml files as they are, define the names in the local-values.yaml as follows. You can modify them as per your preference.
+If you plan to exercise creating volume from a snapshot with given yaml files as they are,
+define the names in the local-values.yaml as follows. You can modify them as per your preference.
 ```text
 scNfsName: zfssa-nfs-vs-example-sc
 vscNfsName: zfssa-nfs-vs-example-vsc

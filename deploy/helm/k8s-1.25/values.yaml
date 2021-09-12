@@ -1,0 +1,48 @@
+# Global docker image setting
+image:
+  sidecarBase: container-registry.oracle.com/olcne/
+  zfssaBase: iad.ocir.io/zs/store/csi/
+  pullPolicy: Always
+
+# Define all the images that will be used during helm chart deployment
+images:
+  csiNodeDriverRegistrar:
+    name: csi-node-driver-registrar
+    tag: "v2.9.0"
+  zfssaCsiDriver:
+    name: zfssa-csi-driver
+    tag: "v1.2.0"
+  csiProvisioner:
+    name: csi-provisioner
+    tag: "v3.6.0"
+  csiAttacher:
+    name: csi-attacher
+    tag: "v4.4.0"
+  csiResizer:
+    name: csi-resizer
+    tag: "v1.9.0"
+  csiSnapshotter:
+    name: csi-snapshotter
+    tag: "v6.3.0"
+  csiLivenessProbe:
+    name: livenessprobe
+    tag: "v2.11.0"
+  csiSnapshotController:
+    name: snapshot-controller
+    tag: "v6.3.0"
+
+paths:
+  pluginDir:
+    hostPath: "/var/lib/kubelet/plugins/com.oracle.zfssabs"
+    mountPath: "/plugin"
+
+deployment:
+  namespace: default
+
+# ZFSSA-specific information
+# It is desirable to provision a normal login user with required authorizations.
+zfssaInformation:
+  username: text-string
+  password: text-string
+  target: text-string
+  cert: cert-base64-encoded

@@ -6,11 +6,11 @@
 package service
 
 import (
-	"github.com/oracle/zfssa-csi-driver/pkg/utils"
-	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"context"
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/oracle/zfssa-csi-driver/pkg/utils"
+	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	context2 "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,22 +20,22 @@ import (
 
 // ZFSSA block volume
 type zLUN struct {
-	bolt			*utils.Bolt
-	refcount		int32
-	state			volumeState
-	href			string
-	id				*utils.VolumeId
-	capacity		int64
-	accessModes		[]csi.VolumeCapability_AccessMode
-	source			*csi.VolumeContentSource
-	initiatorgroup	[]string
-	targetgroup		string``
+	bolt           *utils.Bolt
+	refcount       int32
+	state          volumeState
+	href           string
+	id             *utils.VolumeId
+	capacity       int64
+	accessModes    []csi.VolumeCapability_AccessMode
+	source         *csi.VolumeContentSource
+	initiatorgroup []string
+	targetgroup    string ``
 }
 
 var (
 	// access modes supported by block volumes.
-	blockVolumeCaps = []csi.VolumeCapability_AccessMode {
-		{ Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER },
+	blockVolumeCaps = []csi.VolumeCapability_AccessMode{
+		{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 	}
 )
 
@@ -58,8 +58,8 @@ func (lun *zLUN) create(ctx context.Context, token *zfssarest.Token,
 	capacityRange := req.GetCapacityRange()
 	capabilities := req.GetVolumeCapabilities()
 
-	_, luninfo, httpStatus, err := zfssarest.CreateLUN(ctx, token, 
-							req.GetName(), getVolumeSize(capacityRange), &req.Parameters)
+	_, luninfo, httpStatus, err := zfssarest.CreateLUN(ctx, token,
+		req.GetName(), getVolumeSize(capacityRange), &req.Parameters)
 	if err != nil {
 		if httpStatus != http.StatusConflict {
 			lun.state = stateDeleted
@@ -67,47 +67,47 @@ func (lun *zLUN) create(ctx context.Context, token *zfssarest.Token,
 		}
 
 		utils.GetLogCTRL(ctx, 5).Println("LUN already exits")
-		// The creation failed because the appliance already has a LUN 
-		// with the same name. We get the information from the appliance, 
+		// The creation failed because the appliance already has a LUN
+		// with the same name. We get the information from the appliance,
 		// update the LUN context and check its compatibility with the request.
 		if lun.state == stateCreated {
-			luninfo, _, err := zfssarest.GetLun(ctx, token, 
-            				req.Parameters["pool"], req.Parameters["project"], req.GetName())
+			luninfo, _, err := zfssarest.GetLun(ctx, token,
+				req.Parameters["pool"], req.Parameters["project"], req.GetName())
 			if err != nil {
 				return nil, err
 			}
 			lun.setInfo(luninfo)
 		}
-			
+
 		// The LUN has already been created. The compatibility of the
 		// capacity range and accessModes is checked.
 		if !compareCapacityRange(capacityRange, lun.capacity) {
-			return nil, 
-				   status.Errorf(codes.AlreadyExists, 
-						"Volume (%s) is already on target (%s),"+ 
+			return nil,
+				status.Errorf(codes.AlreadyExists,
+					"Volume (%s) is already on target (%s),"+
 						" capacity range incompatible (%v), requested (%v/%v)",
-						lun.id.Name, lun.id.Zfssa, lun.capacity,
-						capacityRange.RequiredBytes, capacityRange.LimitBytes)
+					lun.id.Name, lun.id.Zfssa, lun.capacity,
+					capacityRange.RequiredBytes, capacityRange.LimitBytes)
 		}
 		if !compareCapabilities(capabilities, lun.accessModes, true) {
-			return nil, 
-				   status.Errorf(codes.AlreadyExists, 
-				   		"Volume (%s) is already on target (%s), accessModes are incompatible",
-						lun.id.Name, lun.id.Zfssa)
+			return nil,
+				status.Errorf(codes.AlreadyExists,
+					"Volume (%s) is already on target (%s), accessModes are incompatible",
+					lun.id.Name, lun.id.Zfssa)
 		}
 	} else {
 		lun.setInfo(luninfo)
 	}
 
 	utils.GetLogCTRL(ctx, 5).Printf(
-		"LUN created: name=%s, target=%s, assigned_number=%d", 
+		"LUN created: name=%s, target=%s, assigned_number=%d",
 		luninfo.CanonicalName, luninfo.TargetGroup, luninfo.AssignedNumber[0])
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:		lun.id.String(),
-			CapacityBytes:	lun.capacity,
-			VolumeContext:	req.GetParameters()}}, nil
+			VolumeId:      lun.id.String(),
+			CapacityBytes: lun.capacity,
+			VolumeContext: req.GetParameters()}}, nil
 }
 
 func (lun *zLUN) cloneSnapshot(ctx context.Context, token *zfssarest.Token,
@@ -152,6 +152,17 @@ func (lun *zLUN) delete(ctx context.Context, token *zfssarest.Token) (*csi.Delet
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
+func (lun *zLUN) cloneVolume(ctx context.Context, token *zfssarest.Token,
+	req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+
+	// Create a snapshot to base the clone on
+
+	// Clone the snapshot to the volume
+	
+	utils.GetLogCTRL(ctx, 5).Println("lun.cloneVolume")
+	return nil, status.Error(codes.Unimplemented, "LUN cloneVolume not implemented yet")
+}
+
 func (lun *zLUN) controllerPublishVolume(ctx context.Context, token *zfssarest.Token,
 	req *csi.ControllerPublishVolumeRequest, nodeName string) (*csi.ControllerPublishVolumeResponse, error) {
 
@@ -167,12 +178,12 @@ func (lun *zLUN) controllerPublishVolume(ctx context.Context, token *zfssarest.T
 		return nil, err
 	}
 
-	// When the driver creates a LUN or clones a Lun from a snapshot of another Lun, 
-	// it masks the intiator group of the Lun using zfssarest.MaskAll value. 
+	// When the driver creates a LUN or clones a Lun from a snapshot of another Lun,
+	// it masks the initiator group of the Lun using zfssarest.MaskAll value.
 	// When the driver unpublishes the Lun, it also masks the initiator group.
-	// This block is to test if the Lun to publish was created or unpublished 
+	// This block is to test if the Lun to publish was created or unpublished
 	// by the driver. Publishing a Lun with unmasked initiator group fails
-	// to avoid mistakenly publishing a Lun that may be in use by other entity. 
+	// to avoid mistakenly publishing a Lun that may be in use by other entity.
 	utils.GetLogCTRL(ctx, 5).Printf("Volume to publish: %s:%s", lun.id, list[0])
 	if len(list) != 1 || list[0] != zfssarest.MaskAll {
 		var msg string
@@ -184,7 +195,7 @@ func (lun *zLUN) controllerPublishVolume(ctx context.Context, token *zfssarest.T
 		return nil, status.Error(codes.FailedPrecondition, msg)
 	}
 
-    // Reset the masked initiator group with one named by the current node name.
+	// Reset the masked initiator group with one named by the current node name.
 	// There must be initiator groups on ZFSSA defined by the node names.
 	_, err = zfssarest.SetInitiatorGroupList(ctx, token, pool, project, name, nodeName)
 	if err != nil {
@@ -285,15 +296,15 @@ func (lun *zLUN) getSnapshotsList(ctx context.Context, token *zfssarest.Token) (
 	return zfssaSnapshotList2csiSnapshotList(ctx, token.Name, snapList), nil
 }
 
-func (lun *zLUN) getState() volumeState { return lun.state }
-func (lun *zLUN) getName() string { return lun.id.Name }
-func (lun *zLUN) getHref() string { return lun.href }
+func (lun *zLUN) getState() volumeState        { return lun.state }
+func (lun *zLUN) getName() string              { return lun.id.Name }
+func (lun *zLUN) getHref() string              { return lun.href }
 func (lun *zLUN) getVolumeID() *utils.VolumeId { return lun.id }
-func (lun *zLUN) getCapacity() int64 { return lun.capacity }
-func (lun *zLUN) isBlock() bool { return true }
+func (lun *zLUN) getCapacity() int64           { return lun.capacity }
+func (lun *zLUN) isBlock() bool                { return true }
 
 func (lun *zLUN) getSnapshots(ctx context.Context, token *zfssarest.Token) ([]zfssarest.Snapshot, error) {
-	return  zfssarest.GetSnapshots(ctx, token, lun.href)
+	return zfssarest.GetSnapshots(ctx, token, lun.href)
 }
 
 func (lun *zLUN) setInfo(volInfo interface{}) {
@@ -329,7 +340,7 @@ func (lun *zLUN) lock(ctx context.Context) volumeState {
 	return lun.state
 }
 
-func (lun *zLUN) unlock(ctx context.Context) (int32, volumeState){
+func (lun *zLUN) unlock(ctx context.Context) (int32, volumeState) {
 	lun.bolt.Unlock(ctx)
 	utils.GetLogCTRL(ctx, 5).Printf("%s is unlocked", lun.id.String())
 	return lun.refcount, lun.state

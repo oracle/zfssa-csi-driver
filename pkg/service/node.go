@@ -6,21 +6,21 @@
 package service
 
 import (
+	"fmt"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/oracle/zfssa-csi-driver/pkg/utils"
 	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
-	"fmt"
-	"os"
-	"github.com/container-storage-interface/spec/lib/go/csi"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"os"
 )
 
 var (
 	// nodeCaps represents the capability of node service.
 	nodeCaps = []csi.NodeServiceCapability_RPC_Type{
 		csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
-//		csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
+		//		csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
 		csi.NodeServiceCapability_RPC_UNKNOWN,
 	}
 )
@@ -31,7 +31,7 @@ func NewZFSSANodeServer(zd *ZFSSADriver) *csi.NodeServer {
 	return &ns
 }
 
-func (zd *ZFSSADriver) NodeStageVolume(ctx context.Context,	req *csi.NodeStageVolumeRequest) (
+func (zd *ZFSSADriver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (
 	*csi.NodeStageVolumeResponse, error) {
 
 	utils.GetLogNODE(ctx, 5).Println("NodeStageVolume", "request", req)
@@ -102,7 +102,7 @@ func (zd *ZFSSADriver) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnsta
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot unmount staging target %q: %v", target, err)
 	}
-	
+
 	notMnt, mntErr := zd.NodeMounter.IsLikelyNotMountPoint(target)
 	if mntErr != nil {
 		utils.GetLogNODE(ctx, 2).Println("Cannot determine staging target path",

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.podNfsName }}
+  labels:
+    name: ol7slim-test
+spec:
+  containers:
+    - image: {{ .Values.imageBase }}{{ .Values.images.os.name }}:{{ .Values.images.os.tag }}
+      command: ["/bin/sh", "-c"]
+      args: [ "tail -f /dev/null" ]
+      name: ol7slim
+      volumeMounts:
+        - name: vol
+          mountPath: /mnt
+  volumes:
+    - name: vol
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvcNfsName }}
+        readOnly: false

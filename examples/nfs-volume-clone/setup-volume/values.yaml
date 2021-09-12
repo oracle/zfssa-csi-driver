@@ -1,0 +1,26 @@
+# Various names used through example
+scNfsName: zfssa-nfs-volume-clone-example-sc
+pvcNfsName: zfssa-nfs-volume-example-pvc
+podNfsName: zfssa-nfs-volume-example-pod
+
+# Location for images used
+imageBase: container-registry.oracle.com/os/
+images:
+  os:
+    name: oraclelinux
+    tag: "7-slim"
+
+# Settings for target appliance
+appliance:
+  volumeType: thin
+  targetGroup: OVERRIDE
+  pool: OVERRIDE
+  project: OVERRIDE
+  targetPortal: OVERRIDE
+  nfsServer: OVERRIDE
+  rootUser: root
+  rootGroup: other
+  shareNFS: "on"
+
+# Settings for volume
+volSize: OVERRIDE
