@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	// the current controller service accessModes supported
+	// controller service capabilities supported
 	controllerCaps = []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
@@ -26,6 +26,7 @@ var (
 		csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
 		csi.ControllerServiceCapability_RPC_LIST_SNAPSHOTS,
+		csi.ControllerServiceCapability_RPC_CLONE_VOLUME,
 	}
 )
 
@@ -51,6 +52,7 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 		return nil, err
 	}
 
+	// TODO: check if pool/project are populated if the storage class is left out on volume clone
 	parameters := req.GetParameters()
 	pool := parameters["pool"]
 	project := parameters["project"]
@@ -62,14 +64,26 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 	defer 	zd.releaseVolume(ctx, zvol)
 
 	if volumeContentSource := req.GetVolumeContentSource(); volumeContentSource != nil {
-		if snapshot := volumeContentSource.GetSnapshot(); snapshot != nil {
+		switch volumeContentSource.Type.(type) {
+		case *csi.VolumeContentSource_Snapshot:
+			snapshot := volumeContentSource.GetSnapshot()
+			utils.GetLogCTRL(ctx, 5).Println("CreateSnapshot", "request", snapshot)
 			zsnap, err := zd.lookupSnapshot(ctx, token, snapshot.GetSnapshotId())
 			if err != nil {
 				return nil, err
 			}
 			defer 	zd.releaseSnapshot(ctx, zsnap)
 			return zvol.cloneSnapshot(ctx, token, req, zsnap)
+		case *csi.VolumeContentSource_Volume:
+			volume := volumeContentSource.GetVolume()
+			utils.GetLogCTRL(ctx, 5).Println("CreateVolumeClone", "request", volume)
+			// clone creation is complex, delegate out to it
+			return zvol.clone(ctx, token, req)
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "%v type not implemented in driver",
+				volumeContentSource.GetType())
 		}
+
 		return nil, status.Error(codes.InvalidArgument, "Only snapshots are supported as content source")
 	} else {
 		return zvol.create(ctx, token, req)

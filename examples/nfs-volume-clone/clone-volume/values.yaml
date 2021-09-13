@@ -1,0 +1,8 @@
+# Various names used through example
+scNfsName: zfssa-nfs-volume-clone-example-sc
+pvcNfsName: zfssa-nfs-volume-clone-pvc
+podNfsName: zfssa-nfs-volume-clone-pod
+pvcSourceName: zfssa-nfs-volume-example-pvc
+
+# Settings for volume
+volSize: OVERRIDE

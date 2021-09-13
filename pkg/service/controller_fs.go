@@ -160,6 +160,13 @@ func (fs *zFilesystem) delete(ctx context.Context, token *zfssarest.Token) (*csi
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
+func (lun *zFilesystem) clone(ctx context.Context, token *zfssarest.Token,
+	req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+
+	utils.GetLogCTRL(ctx, 5).Println("fs.clone")
+	return nil, status.Error(codes.Unimplemented, "Filesystem clone not implemented yet")
+}
+
 // Publishes a file system. In this case there's nothing to do.
 //
 func (fs *zFilesystem) controllerPublishVolume(ctx context.Context, token *zfssarest.Token,

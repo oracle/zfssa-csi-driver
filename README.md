@@ -96,6 +96,9 @@ This set exercises dynamic volume creation (restoring from a volume snapshot) fo
 * [NFS Volume Snapshot](./examples/nfs-vsc/README.md) - illustrates a snapshot creation of an NFS volume.
 * [Block Volume Snapshot](./examples/block-vsc/README.md) - illustrates a snapshot creation of a block volume.
 
+This set exercises dynamic volume creation using clones:
+* [NFS Volume Clone](./examples/nfs-volume-clone/README.md) - illustrates a clone of an NFS volume.
+
 ## Help
 
 Refer to the documentation links and examples for more information on
