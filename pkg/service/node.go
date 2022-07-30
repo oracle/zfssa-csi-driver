@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -165,7 +165,7 @@ func (zd *ZFSSADriver) NodePublishVolume(ctx context.Context, req *csi.NodePubli
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	var mountOptions []string
 	if req.GetReadonly() {
@@ -217,7 +217,7 @@ func (zd *ZFSSADriver) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnp
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 	if zVolumeId.IsBlock() {
 		return zd.nodeUnpublishBlockVolume(ctx, token, req, zVolumeId)
 	} else {
