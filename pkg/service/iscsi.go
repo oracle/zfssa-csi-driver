@@ -6,15 +6,15 @@
 package service
 
 import (
-	"github.com/oracle/zfssa-csi-driver/pkg/utils"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	iscsi_lib "github.com/kubernetes-csi/csi-lib-iscsi/iscsi"
-	"k8s.io/utils/mount"
+	"github.com/oracle/zfssa-csi-driver/pkg/utils"
 	"k8s.io/kubernetes/pkg/volume/util"
+	"k8s.io/utils/mount"
 	"os"
 	"os/exec"
 	"path"
@@ -24,12 +24,12 @@ import (
 // A subset of the iscsiadm
 type IscsiAdmReturnValues int32
 
-const(
-	ISCSI_SUCCESS IscsiAdmReturnValues = 0
-	ISCSI_ERR_SESS_NOT_FOUND = 2
-	ISCSI_ERR_TRANS_TIMEOUT = 8
-	ISCSI_ERR_ISCSID_NOTCONN = 20
-	ISCSI_ERR_NO_OBJS_FOUND = 21
+const (
+	ISCSI_SUCCESS            IscsiAdmReturnValues = 0
+	ISCSI_ERR_SESS_NOT_FOUND                      = 2
+	ISCSI_ERR_TRANS_TIMEOUT                       = 8
+	ISCSI_ERR_ISCSID_NOTCONN                      = 20
+	ISCSI_ERR_NO_OBJS_FOUND                       = 21
 )
 
 func GetISCSIInfo(ctx context.Context, vid *utils.VolumeId, req *csi.NodePublishVolumeRequest, targetIqn string,
@@ -92,9 +92,9 @@ func GetISCSIInfo(ctx context.Context, vid *utils.VolumeId, req *csi.NodePublish
 
 	utils.GetLogCTRL(ctx, 5).Println("Final values", "iface", iface, "initiatorName", initiatorName)
 	i := iscsiDisk{
-		VolName: volName,
+		VolName:         volName,
 		Portals:         bkportal,
-		Iqn: 			 iqn,
+		Iqn:             iqn,
 		lun:             assignedLunNumber,
 		Iface:           iface,
 		chapDiscovery:   chapDiscovery,
@@ -160,9 +160,9 @@ func GetNodeISCSIInfo(vid *utils.VolumeId, req *csi.NodePublishVolumeRequest, ta
 	}
 
 	i := iscsiDisk{
-		VolName: volName,
+		VolName:         volName,
 		Portals:         bkportal,
-		Iqn: iqn,
+		Iqn:             iqn,
 		lun:             assignedLunNumber,
 		Iface:           iface,
 		chapDiscovery:   chapDiscovery,
@@ -180,8 +180,7 @@ func buildISCSIConnector(iscsiInfo *iscsiDisk) *iscsi_lib.Connector {
 		VolumeName:    iscsiInfo.VolName,
 		TargetIqn:     iscsiInfo.Iqn,
 		TargetPortals: iscsiInfo.Portals,
-		Lun:		   iscsiInfo.lun,
-		Multipath:     len(iscsiInfo.Portals) > 1,
+		Lun:           iscsiInfo.lun,
 	}
 
 	if iscsiInfo.sessionSecret != (iscsi_lib.Secrets{}) {
@@ -314,10 +313,9 @@ type iscsiDiskUnmounter struct {
 	mounter mount.Interface
 }
 
-
 type ISCSIUtil struct{}
 
-func (util *ISCSIUtil) Rescan (ctx context.Context) (string, error) {
+func (util *ISCSIUtil) Rescan(ctx context.Context) (string, error) {
 	cmd := exec.Command("iscsiadm", "-m", "session", "--rescan")
 	var stdout bytes.Buffer
 	var iscsiadmError error
@@ -337,9 +335,9 @@ func (util *ISCSIUtil) Rescan (ctx context.Context) (string, error) {
 			formattedOutput := strings.Replace(string(stdout.Bytes()), "\n", "", -1)
 			iscsiadmError = fmt.Errorf("iscsiadm error: %s (%s)", formattedOutput, err.Error())
 		}
-	    return string(stdout.Bytes()), iscsiadmError
-	} 
-    
+		return string(stdout.Bytes()), iscsiadmError
+	}
+
 	err = cmd.Wait()
 	if err != nil {
 		exitCode := err.(*exec.ExitError).ExitCode()
@@ -459,7 +457,8 @@ func (util *ISCSIUtil) DetachDisk(ctx context.Context, c iscsiDiskUnmounter, tar
 		return err
 	}
 
-	err = iscsi_lib.Disconnect(connector.TargetIqn, connector.TargetPortals)
+	iscsi_lib.Disconnect(connector.TargetIqn, connector.TargetPortals)
+
 	if err := os.RemoveAll(targetPath); err != nil {
 		return err
 	}
