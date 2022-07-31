@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -44,7 +44,7 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	// Validate the parameters
 	if err := validateCreateVolumeReq(ctx, token, req); err != nil {
@@ -186,7 +186,7 @@ func (zd *ZFSSADriver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRe
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	volumeID := req.GetVolumeId()
 	if len(volumeID) == 0 {
@@ -254,7 +254,7 @@ func (zd *ZFSSADriver) ControllerPublishVolume(ctx context.Context, req *csi.Con
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	zvol, err := zd.lookupVolume(ctx, token, volumeID)
 	if err != nil {
@@ -285,7 +285,7 @@ func (zd *ZFSSADriver) ControllerUnpublishVolume(ctx context.Context, req *csi.C
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	zvol, err := zd.lookupVolume(ctx, token, volumeID)
 	if err != nil {
@@ -322,7 +322,7 @@ func (zd *ZFSSADriver) ValidateVolumeCapabilities(ctx context.Context, req *csi.
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	zvol, err := zd.lookupVolume(ctx, token, volumeID)
 	if err != nil {
@@ -414,7 +414,7 @@ func (zd *ZFSSADriver) GetCapacity(ctx context.Context, req *csi.GetCapacityRequ
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	parameters := req.GetParameters()
 	projectName, ok := parameters["project"]
@@ -492,7 +492,7 @@ func (zd *ZFSSADriver) CreateSnapshot(ctx context.Context, req *csi.CreateSnapsh
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	zsnap, err := zd.newSnapshot(ctx, token, snapName, sourceId)
 	if err != nil {
@@ -519,7 +519,7 @@ func (zd *ZFSSADriver) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapsh
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	// Get exclusive access to the snapshot.
 	zsnap, err := zd.lookupSnapshot(ctx, token, req.SnapshotId)
@@ -571,7 +571,7 @@ func (zd *ZFSSADriver) ListSnapshots(ctx context.Context, req *csi.ListSnapshots
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	var entries []*csi.ListSnapshotsResponse_Entry
 
@@ -651,7 +651,7 @@ func (zd *ZFSSADriver) ControllerExpandVolume(ctx context.Context, req *csi.Cont
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	zvol, err := zd.lookupVolume(ctx, token, volumeID)
 	if err != nil {

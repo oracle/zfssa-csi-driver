@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -69,7 +69,7 @@ func (zd *ZFSSADriver) Probe(ctx context.Context, req *csi.ProbeRequest) (
 	if err != nil {
 		return nil, grpcStatus.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 	_, err = zfssarest.GetServices(ctx, token)
 	if err != nil {
 		return &csi.ProbeResponse{
