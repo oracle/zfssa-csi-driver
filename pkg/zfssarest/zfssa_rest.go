@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -56,7 +56,6 @@ const (
 	zProperty					= zProperties + "/%s"
 )
 
-// State of a ZFSSA token
 const (
 	zfssaTokenInvalid = iota
 	zfssaTokenCreating
@@ -128,10 +127,13 @@ func InitREST(name string, certs []byte, secure bool) error {
 
 // Looks up a token context based on the user name passed in. If one doesn't exist
 // yet, it is created.
-func LookUpToken(user, password string) *Token {
-
+func LookUpToken(ctx context.Context, user, password string) *Token {
 	tokens.mtx.Lock()
 	if token, ok := tokens.list[user]; ok {
+		if password != "" && password != token.password {
+			utils.GetLogREST(ctx, 2).Println("Target ZFSSA password updated for session")
+			token.password = password
+		}
 		tokens.mtx.Unlock()
 		return token
 	}
@@ -173,11 +175,12 @@ func getToken(ctx context.Context, token *Token, previous *string) (string, erro
 		switch token.state {
 		case zfssaTokenInvalid:
 			// No token available. We create one.
+			utils.GetLogREST(ctx, 2).Println("Creating new ZFSSA session for token")
 			token.state = zfssaTokenCreating
 			token.mtx.Unlock()
 
 			var err error
-			token.xAuthSession, token.xAuthName, err = createToken(ctx, token)
+			token.xAuthSession, token.xAuthName, err = createZfssaSession(ctx, token)
 			xAuthSession := token.xAuthSession
 
 			token.mtx.Lock()
@@ -202,6 +205,7 @@ func getToken(ctx context.Context, token *Token, previous *string) (string, erro
 				token.mtx.Unlock()
 				return xAuthSession, nil
 			}
+			utils.GetLogREST(ctx, 2).Println("ZFSSA session transitioning to invalid")
 			token.state = zfssaTokenInvalid
 			continue
 
@@ -211,11 +215,11 @@ func getToken(ctx context.Context, token *Token, previous *string) (string, erro
 	}
 }
 
-// Send an HTTP request to the ZFSSA to create a non-persistent token.
+// Send an HTTP request to the ZFSSA to create a non-persistent, reusable session.
 //
 // A non-persistent token is specific to the cluster node on which the ID was
 // created and is not synchronized between the cluster peers.
-func createToken(ctx context.Context, token *Token) (string, string, error) {
+func createZfssaSession(ctx context.Context, token *Token) (string, string, error) {
 
 	httpReq, err := http.NewRequest("POST", zServicesURL, bytes.NewBuffer(nil))
 	if err != nil {
@@ -325,6 +329,7 @@ func makeRequest(ctx context.Context, token *Token, method, url string, reqbody 
 
 	// We check here whether the token may have expired and renew it if needed.
 	if rsphttp.StatusCode == http.StatusUnauthorized {
+		// Refresh token and secret
 		_, err = getToken(ctx, token, &xAuthSession)
 		return nil, http.StatusUnauthorized, err
 	}

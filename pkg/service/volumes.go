@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -435,7 +435,7 @@ func (zd *ZFSSADriver) updateFilesystemList(ctx context.Context, out chan<- erro
 	if err != nil {
 		out <- err
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 	fsList, err := zfssarest.GetFilesystems(ctx, token, "", "")
 	if err != nil {
 		utils.GetLogCTRL(ctx, 2).Println("zd.updateFilesystemList failed", "error", err.Error())
@@ -461,7 +461,7 @@ func (zd *ZFSSADriver) updateLunList(ctx context.Context, out chan<- error) {
 	if err != nil {
 		out <- err
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	lunList, err := zfssarest.GetLuns(ctx, token, "", "")
 	if err != nil {
@@ -520,7 +520,7 @@ func (zd *ZFSSADriver) updateSnapshotList(ctx context.Context) error {
 		return err
 	}
 
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 	snapList, err := zfssarest.GetSnapshots(ctx, token, "")
 	if err != nil {
 		utils.GetLogCTRL(ctx, 2).Println("zd.updateSnapshotList failed", "error", err.Error())
