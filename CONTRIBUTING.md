@@ -5,7 +5,7 @@ Oracle welcomes contributions to this repository from anyone. If you want to sub
 ## Contributing to the zfssa-csi-driver repository
 
 Pull requests can be made under
-[The Oracle Contributor Agreement](https://www.oracle.com/technetwork/community/oca-486395.html) (OCA).
+[The Oracle Contributor Agreement](https://oca.opensource.oracle.com) (OCA).
 
 For pull requests to be accepted, the bottom of your commit message must have
 the following line using your name and e-mail address as it appears in the
@@ -36,3 +36,10 @@ by your fix.
 what your changes are meant to do and provide simple steps on how to validate
 your changes. Ensure that you reference the issue you created as well.
 We will assign the pull request to 2-3 people for review before it is merged.
+
+## Code of conduct
+
+Follow the [Golden Rule](https://en.wikipedia.org/wiki/Golden_Rule). If you'd
+like more specific guidelines, see the [Contributor Covenant Code of Conduct][COC].
+
+[COC]: https://www.contributor-covenant.org/version/1/4/code-of-conduct/
