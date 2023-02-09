@@ -101,6 +101,10 @@ This set exercises dynamic volume creation (restoring from a volume snapshot) fo
 Refer to the documentation links and examples for more information on
 this driver.
 
+## Security
+
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+
 ## Contributing
 
 See [CONTRIBUTING](./CONTRIBUTING.md) for details.
