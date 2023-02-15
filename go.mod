@@ -5,15 +5,14 @@ go 1.13
 require (
 	github.com/container-storage-interface/spec v1.2.0
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
-	github.com/golang/protobuf v1.4.0
+	github.com/golang/protobuf v1.4.3
 	github.com/kubernetes-csi/csi-lib-iscsi v0.0.0-20190415173011-c545557492f4
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/onsi/gomega v1.9.0 // indirect
-	github.com/prometheus/client_golang v1.2.1 // indirect
-	golang.org/x/net v0.0.0-20191101175033-0deb6923b6d9
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
+	github.com/prometheus/client_golang v1.11.1 // indirect
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	google.golang.org/grpc v1.23.1
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/apimachinery v0.17.11
 	k8s.io/client-go v0.18.2
 	k8s.io/klog v1.0.0
