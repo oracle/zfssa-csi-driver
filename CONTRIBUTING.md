@@ -2,7 +2,15 @@
 
 Oracle welcomes contributions to this repository from anyone. If you want to submit a pull request to fix a bug or enhance code, please first open an issue and link to that issue when you submit your pull request. If you have any questions about a possible contribution, feel free to open an issue too.
 
-## Contributing to the zfssa-csi-driver repository
+## Opening issues
+
+For bugs or enhancement requests, please file a GitHub issue unless it's
+security related. When filing a bug remember that the better written the bug is,
+the more likely it is to be fixed. If you think you've found a security
+vulnerability, do not raise a GitHub issue and follow the instructions in our
+[security policy](./SECURITY.md).
+
+## Contributing code
 
 Pull requests can be made under
 [The Oracle Contributor Agreement](https://oca.opensource.oracle.com) (OCA).
