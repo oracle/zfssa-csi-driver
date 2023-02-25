@@ -11,7 +11,7 @@ require (
 	github.com/onsi/gomega v1.9.0 // indirect
 	github.com/prometheus/client_golang v1.2.1 // indirect
 	golang.org/x/net v0.0.0-20191101175033-0deb6923b6d9
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/grpc v1.23.1
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/apimachinery v0.17.11
