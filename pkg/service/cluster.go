@@ -8,6 +8,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -39,13 +40,16 @@ func InitClusterInterface() error {
 // Returns the node name based on the passed in node ID.
 //
 func GetNodeName(nodeID string) (string, error) {
-	nodeInfo, err := clientset.CoreV1().Nodes().Get(nodeID, metav1.GetOptions{
-		TypeMeta:        metav1.TypeMeta{
-			Kind:       "",
-			APIVersion: "",
-		},
-		ResourceVersion: "1",
-	})
+	nodeInfo, err := clientset.CoreV1().Nodes().Get(
+		context.TODO(), nodeID,
+		metav1.GetOptions{
+			TypeMeta:
+				metav1.TypeMeta{
+					Kind:       "",
+					APIVersion: "",
+				},
+			ResourceVersion: "1",
+		})
 
 	if err != nil {
 		return "", err
@@ -57,14 +61,16 @@ func GetNodeName(nodeID string) (string, error) {
 // Returns the list of nodes in the form of a slice containing their name.
 //
 func GetNodeList() ([]string, error) {
-
-	nodeList, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{
-		TypeMeta:        metav1.TypeMeta{
-			Kind:       "",
-			APIVersion: "",
-		},
-		ResourceVersion: "1",
-	})
+	nodeList, err := clientset.CoreV1().Nodes().List(
+		context.TODO(),
+		metav1.ListOptions{
+			TypeMeta:
+				metav1.TypeMeta{
+					Kind:       "",
+					APIVersion: "",
+				},
+			ResourceVersion: "1",
+		})
 
 	if err != nil {
 		return nil, err
