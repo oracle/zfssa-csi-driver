@@ -5,7 +5,7 @@
 # This is the Dockerfile for Oracle ZFS Storage Appliance CSI Driver
 #
 
-FROM container-registry.oracle.com/os/oraclelinux:7-slim
+FROM container-registry.oracle.com/os/oraclelinux:9-slim
 LABEL maintainers="Oracle"
 LABEL description="Oracle ZFS Storage Appliance CSI Driver for Kubernetes"
 
@@ -14,7 +14,7 @@ ENV http_proxy=$var_proxy
 ENV https_proxy=$var_proxy
 
 # Add util-linux to get a new version of losetup.
-RUN yum -y install iscsi-initiator-utils nfs-utils e2fsprogs xfsprogs && yum clean all
+RUN microdnf -y install iscsi-initiator-utils nfs-utils e2fsprogs xfsprogs && microdnf clean all
 
 ENV http_proxy ""
 ENV https_proxy ""

@@ -51,21 +51,15 @@ Ensure the following information and requirements can be met prior to installati
     Make sure you have access to the registry or registries containing these images from the worker nodes. The image pull
     policy (`imagePullPolicy`) is set to `IfNotPresent` in the deployment files. During the first deployment the
     Container Runtime will likely try to pull them. If your Container Runtime cannot access the images you will have to
-    pull them manually before deployment. The required images are: 
+    pull them manually before deployment.
 
-    * node-driver-registar v2.0.0+.
-    * external-attacher v3.0.2+.
-    * external-provisioner v2.0.5+.
-    * external-resizer v1.1.0+.
-    * external-snapshotter v3.0.3+.
-
-    The common container images for those images are:
+    For this driver, the [Oracle Container Registry](https://container-registry.oracle.com/) will be used.
     
-    * k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.0.0  
-    * k8s.gcr.io/sig-storage/csi-attacher:v3.0.2
-    * k8s.gcr.io/sig-storage/csi-provisioner:v2.0.5 
-    * k8s.gcr.io/sig-storage/csi-resizer:v1.1.0 
-    * k8s.gcr.io/sig-storage/csi-snapshotter:v3.0.3 
+    * container-registry.oracle.com/olcne_developer/csi-node-driver-registrar:v2.7.0  
+    * container-registry.oracle.com/olcne_developer/csi-attacher:v4.1.0
+    * container-registry.oracle.com/olcne_developer/csi-provisioner:v3.4.0 
+    * container-registry.oracle.com/olcne_developer/csi-resizer:v1.7.0
+    * container-registry.oracle.com/olcne_developer/csi-snapshotter:v6.2.1
     
 * Plugin image
 

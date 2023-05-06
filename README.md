@@ -4,12 +4,13 @@ This plugin supports Oracle ZFS Storage Appliance
 as a backend for block storage (iSCSI volumes) and file storage (NFS).
 
 | CSI Plugin Version | Supported CSI Versions | Supported Kubernetes Versions | Persistence | Supported Access Modes | Dynamic Provisioning | Raw Block Support |
-| --- | --- | --- | --- | --- | --- | --- |
-| v1.1.0 | v1.0+ | v1.20.X+ | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
+|--------------------|------------------------|-------------------------------| --- | --- | --- | --- |
+| v1.1.0             | v1.0+                  | v1.20.X+                      | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
+| v1.8.0             | v1.8.0+                | v1.26.X+                      | Persistent | Read/Write Once (for Block), ReadWriteMany (for File) | Yes | Yes |
 
 ## Requirements
 
-* Kubernetes v1.20 or above (Oracle Linux Cloud Native Environment 1.3)
+* Kubernetes v1.26 or above (Oracle Linux Cloud Native Environment 1.3)
 * A Container runtime implementing the Kubernetes Container Runtime Interface (ex. CRI-O)
 * An Oracle ZFS Storage Appliance running Appliance Kit Version 8.8 or above. This plugin may work with previous 
   versions but it is not tested with them. It is possible to use this 
