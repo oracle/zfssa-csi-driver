@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -31,6 +31,7 @@ const (
 	DefaultLogLevel = "3"
 	DefaultCertPath = "/mnt/certs/zfssa.crt"
 	DefaultCredPath = "/mnt/zfssa/zfssa.yaml"
+	DefaultConfigPath = "/mnt/config/config.yaml"
 )
 
 type ZFSSADriver struct {
@@ -174,7 +175,8 @@ func getConfig(zd *ZFSSADriver) error {
 		return errors.New(fmt.Sprintf("Cannot get ZFSSA username: %s", err))
 	}
 
-	appliance := getEnvFallback("ZFSSA_TARGET", "")
+	zfssaHost, _ := utils.GetValueFromYAML(DefaultConfigPath,"ZFSSA_TARGET")
+	appliance := getEnvFallback("ZFSSA_TARGET", zfssaHost)
 	zd.config.Appliance = strings.TrimSpace(appliance)
 	if zd.config.Appliance == "not-set" {
 		return errors.New("appliance name required")
