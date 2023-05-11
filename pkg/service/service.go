@@ -175,6 +175,7 @@ func getConfig(zd *ZFSSADriver) error {
 		return errors.New(fmt.Sprintf("Cannot get ZFSSA username: %s", err))
 	}
 
+    // Get ZFSSA_TARGET from the mounted config file if available
 	zfssaHost, _ := utils.GetValueFromYAML(DefaultConfigPath,"ZFSSA_TARGET")
 	appliance := getEnvFallback("ZFSSA_TARGET", zfssaHost)
 	zd.config.Appliance = strings.TrimSpace(appliance)
