@@ -30,7 +30,7 @@ Administration Guide how to define the values properly.
 Assuming there is a set of values in the local-values directory, deploy using Helm 3:
 
 ```
-helm  install -f local-values/local-values.yaml zfssa-nfs ./nfs
+helm install -f local-values/local-values.yaml zfssa-nfs ./nfs
 ```
 
 Once deployed, verify each of the created entities using kubectl:

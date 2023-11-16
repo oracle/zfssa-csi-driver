@@ -27,6 +27,9 @@ images:
   csiLivenessProbe:
     name: livenessprobe
     tag: "v2.11.0"
+  csiSnapshotController:
+    name: snapshot-controller
+    tag: "v6.3.0"
 
 paths:
   pluginDir:

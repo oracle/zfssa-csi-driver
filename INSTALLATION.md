@@ -146,18 +146,16 @@ Ensure that:
   ```
 * All worker nodes are running the daemon `rpc.statd`
 
-### Enabling Kubernetes Volume Snapshot Feature (Only for Kubernetes v1.17 - v1.19)
+### Kubernetes Volume Snapshot Feature
 
-The Kubernetes Volume Snapshot feature became GA in Kubernetes v1.20. In order to use
-this feature in Kubernetes pre-v1.20, it MUST be enabled prior to deploying ZS CSI Driver. 
-To enable the feature on Kubernetes pre-v1.20, deploy API extensions, associated configurations,
-and a snapshot controller by running the following command in deploy directory:
+The Kubernetes Volume Snapshot feature became GA in Kubernetes v1.20.
 
-```text
-kubectl apply -R -f k8s-1.17/snapshot-controller
-```
+When installing from the [example helm charts](./deploy/helm/k8s-1.25), the snapshot
+controller, required RBAC roles and CRDs, will be deployed simultaneously with the
+driver. If your Kubernetes deployment already contains a snapshot deployment,
+modify the helm example deployment as needed.
 
-This command will report creation of resources and configuratios as follows:
+After deployment there are resources applied that relate to snapshots, such as:
 
 ```text
 customresourcedefinition.apiextensions.k8s.io/volumesnapshotclasses.snapshot.storage.k8s.io created
@@ -171,9 +169,7 @@ rolebinding.rbac.authorization.k8s.io/snapshot-controller-leaderelection created
 statefulset.apps/snapshot-controller created
 ```
 
-The details of them can be viewed using kubectl get <resource-type> command. Note that the command
-above deploys a snapshot-controler in the default namespace by default. The command
-`kubectl get all` should present something similar to this:
+The details of them can be viewed using kubectl get <resource-type> command:
 
 ```text
 NAME                        READY   STATUS    RESTARTS   AGE
