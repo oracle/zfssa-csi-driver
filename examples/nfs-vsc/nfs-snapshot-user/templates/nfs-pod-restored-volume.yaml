@@ -1,21 +1,21 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: zfssa-block-vs-restore-pod
+  name: zfssa-nfs-vs-restore-pod
   labels:
     name: ol7slim-test
 spec:
   restartPolicy: Always
   containers:
-    - image: container-registry.oracle.com/os/oraclelinux:7-slim
+    - image: {{ .Values.imageBase }}{{ .Values.images.os.name }}:{{ .Values.images.os.tag }}
       command: ["/bin/sh", "-c"]
       args: [ "tail -f /dev/null" ]
       name: ol7slim
-      volumeDevices:
+      volumeMounts:
         - name: vol
-          devicePath: /dev/block
+          mountPath: /mnt
   volumes:
     - name: vol
       persistentVolumeClaim:
-        claimName: zfssa-block-vs-restore-pvc
+        claimName: zfssa-nfs-vs-restore-pvc
         readOnly: false

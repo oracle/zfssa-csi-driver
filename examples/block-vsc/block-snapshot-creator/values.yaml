@@ -1,8 +1,15 @@
 # Various names used through example
-scNfsName: zfssa-nfs-vs-example-sc
-vscNfsName: zfssa-nfs-vs-example-vsc
-pvcNfsName: zfssa-nfs-vs-example-pvc
-podNfsName: zfssa-nfs-vs-example-pod
+scBlockName: zfssa-block-example-sc
+vscBlockName: zfssa-block-example-vsc
+pvcBlockName: zfssa-block-example-pvc
+podBlockName: zfssa-block-example-pod
+
+# Location for images used
+imageBase: container-registry.oracle.com/os/
+images:
+  os:
+    name: oraclelinux
+    tag: "7-slim"
 
 # Settings for target appliance
 appliance:
@@ -14,7 +21,6 @@ appliance:
   nfsServer: OVERRIDE
   rootUser: root
   rootGroup: other
-  shareNFS: "on"
 
 # Settings for volume
 volSize: OVERRIDE

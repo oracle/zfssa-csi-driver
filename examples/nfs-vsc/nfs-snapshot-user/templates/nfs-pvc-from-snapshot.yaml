@@ -13,4 +13,4 @@ spec:
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 68796
+      storage: {{ .Values.volSize }}

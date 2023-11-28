@@ -6,7 +6,7 @@ metadata:
     name: ol7slim-test
 spec:
   containers:
-    - image: container-registry.oracle.com/os/oraclelinux:7-slim
+    - image: {{ .Values.imageBase }}{{ .Values.images.os.name }}:{{ .Values.images.os.tag }}
       command: ["/bin/sh", "-c"]
       args: [ "tail -f /dev/null" ]
       name: ol7slim

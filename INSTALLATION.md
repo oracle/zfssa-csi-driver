@@ -236,6 +236,9 @@ the values to your own values.
    ```
     For development only, other mechanisms can be used to create and share the secret with the container.
 
+    The driver uses a YAML parser for the parsing of this file. Because passwords should contain a variety
+    of 'special characters', enclose the password in double quotes
+
     *Warning* Do not store your credentials in source code control (such as this project). For production
     environments use a secure secret store that encrypts at rest and can provide credentials through role
     based access controls (refer to Kubernetes documentation). Do not use root user in production environments,

@@ -689,7 +689,7 @@ func (zd *ZFSSADriver) ControllerGetVolume(ctx context.Context, req *csi.Control
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
-	token := zfssarest.LookUpToken(user, password)
+	token := zfssarest.LookUpToken(ctx, user, password)
 
 	zvol, err := zd.lookupVolume(ctx, token, volumeID)
 	if err != nil {
