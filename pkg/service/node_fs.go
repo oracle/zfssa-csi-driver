@@ -10,9 +10,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/oracle/zfssa-csi-driver/pkg/utils"
 	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
-	"github.com/container-storage-interface/spec/lib/go/csi"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -75,11 +75,18 @@ func (zd *ZFSSADriver) nodeUnpublishFilesystemVolume(token *zfssarest.Token,
 		return nil, status.Error(codes.InvalidArgument, "Target path not provided")
 	}
 
+	if _, pathErr := os.Stat(targetPath); os.IsNotExist(pathErr) {
+		//targetPath doesn't exist; nothing to do
+		utils.GetLogNODE(ctx, 2).Println("nodeUnpublishFilesystemVolume targetPath doesn't exist", targetPath)
+		return &csi.NodeUnpublishVolumeResponse{}, nil
+	}
 	err := zd.NodeMounter.Unmount(targetPath)
 	if err != nil {
 		utils.GetLogNODE(ctx, 2).Println("Cannot unmount volume",
 			"volume_id", req.GetVolumeId(), "error", err.Error())
-		return nil, status.Error(codes.Internal, err.Error())
+		if !strings.Contains(err.Error(), "not mounted") {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	notMnt, mntErr := zd.NodeMounter.IsLikelyNotMountPoint(targetPath)
