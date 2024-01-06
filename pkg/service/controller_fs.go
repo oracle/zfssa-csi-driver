@@ -6,10 +6,10 @@
 package service
 
 import (
-	"github.com/oracle/zfssa-csi-driver/pkg/utils"
-	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"context"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/oracle/zfssa-csi-driver/pkg/utils"
+	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	context2 "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,25 +19,25 @@ import (
 
 var (
 	filesystemAccessModes = []csi.VolumeCapability_AccessMode{
-		{ Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER },
-		{ Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER },
-		{ Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_READER_ONLY },
-		{ Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY },
-		{ Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_READER_ONLY },
+		{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+		{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+		{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_READER_ONLY},
+		{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
+		{Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_READER_ONLY},
 	}
 )
 
 // ZFSSA mount volume
 type zFilesystem struct {
-	bolt			*utils.Bolt
-	refcount		int32
-	state			volumeState
-	href			string
-	id				*utils.VolumeId
-	capacity		int64
-	accessModes		[]csi.VolumeCapability_AccessMode
-	source			*csi.VolumeContentSource
-	mountpoint		string
+	bolt        *utils.Bolt
+	refcount    int32
+	state       volumeState
+	href        string
+	id          *utils.VolumeId
+	capacity    int64
+	accessModes []csi.VolumeCapability_AccessMode
+	source      *csi.VolumeContentSource
+	mountpoint  string
 }
 
 // Creates a new filesysyem structure. If no information is provided (fsinfo is nil), this
@@ -58,8 +58,18 @@ func (fs *zFilesystem) create(ctx context.Context, token *zfssarest.Token,
 	capacityRange := req.GetCapacityRange()
 	capabilities := req.GetVolumeCapabilities()
 
-	fsinfo, httpStatus, err := zfssarest.CreateFilesystem(ctx, token, 
-						req.GetName(), getVolumeSize(capacityRange), &req.Parameters)
+	if _, ok := req.Parameters["restrictChown"]; !ok {
+		utils.GetLogCTRL(ctx, 5).Println("Adding restrictChown to CreateFilesystem req parameters")
+		req.Parameters["restrictChown"] = "false"
+	}
+
+	if _, ok := req.Parameters["shareNFS"]; !ok {
+		utils.GetLogCTRL(ctx, 5).Println("Adding shareNFS to CreateFilesystem req parameters")
+		req.Parameters["shareNFS"] = "on"
+	}
+
+	fsinfo, httpStatus, err := zfssarest.CreateFilesystem(ctx, token,
+		req.GetName(), getVolumeSize(capacityRange), &req.Parameters)
 	if err != nil {
 		if httpStatus != http.StatusConflict {
 			fs.state = stateDeleted
@@ -71,43 +81,43 @@ func (fs *zFilesystem) create(ctx context.Context, token *zfssarest.Token,
 		// with the same name. We get the information from the appliance, update
 		// the file system context and check its compatibility with the request.
 		if fs.state == stateCreated {
-			fsinfo, _, err = zfssarest.GetFilesystem(ctx, token, 
-						req.Parameters["pool"], req.Parameters["project"], req.GetName())
+			fsinfo, _, err = zfssarest.GetFilesystem(ctx, token,
+				req.Parameters["pool"], req.Parameters["project"], req.GetName())
 			if err != nil {
 				return nil, err
 			}
 			fs.setInfo(fsinfo)
-        	// pass mountpoint as a volume context value to use for nfs mount to the pod
-        	req.Parameters["mountpoint"] = fs.mountpoint
+			// pass mountpoint as a volume context value to use for nfs mount to the pod
+			req.Parameters["mountpoint"] = fs.mountpoint
 		}
 
 		// The volume has already been created. The compatibility of the
 		// capacity range and accessModes is checked.
 		if !compareCapacityRange(capacityRange, fs.capacity) {
-			return nil, 
-				   status.Errorf(codes.AlreadyExists, 
-				   		"Volume (%s) is already on target (%s),"+ 
+			return nil,
+				status.Errorf(codes.AlreadyExists,
+					"Volume (%s) is already on target (%s),"+
 						" capacity range incompatible (%v), requested (%v/%v)",
-						fs.id.Name, fs.id.Zfssa, fs.capacity,
-						capacityRange.RequiredBytes, capacityRange.LimitBytes)
+					fs.id.Name, fs.id.Zfssa, fs.capacity,
+					capacityRange.RequiredBytes, capacityRange.LimitBytes)
 		}
 		if !compareCapabilities(capabilities, fs.accessModes, false) {
-			return nil, 
-				   status.Errorf(codes.AlreadyExists, 
-				   "Volume (%s) is already on target (%s), accessModes are incompatible",
-				   fs.id.Name, fs.id.Zfssa)
+			return nil,
+				status.Errorf(codes.AlreadyExists,
+					"Volume (%s) is already on target (%s), accessModes are incompatible",
+					fs.id.Name, fs.id.Zfssa)
 		}
 	} else {
 		fs.setInfo(fsinfo)
-        // pass mountpoint as a volume context value to use for nfs mount to the pod
-        req.Parameters["mountpoint"] = fs.mountpoint
+		// pass mountpoint as a volume context value to use for nfs mount to the pod
+		req.Parameters["mountpoint"] = fs.mountpoint
 	}
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-		VolumeId:		fs.id.String(),
-		CapacityBytes:	fs.capacity,
-		VolumeContext:	req.Parameters}}, nil
+			VolumeId:      fs.id.String(),
+			CapacityBytes: fs.capacity,
+			VolumeContext: req.Parameters}}, nil
 }
 
 func (fs *zFilesystem) cloneSnapshot(ctx context.Context, token *zfssarest.Token,
@@ -125,8 +135,8 @@ func (fs *zFilesystem) cloneSnapshot(ctx context.Context, token *zfssarest.Token
 	}
 
 	fs.setInfo(fsinfo)
-    // pass mountpoint as a volume context value to use for nfs mount to the pod
-    req.Parameters["mountpoint"] = fs.mountpoint
+	// pass mountpoint as a volume context value to use for nfs mount to the pod
+	req.Parameters["mountpoint"] = fs.mountpoint
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
@@ -168,19 +178,16 @@ func (lun *zFilesystem) clone(ctx context.Context, token *zfssarest.Token,
 }
 
 // Publishes a file system. In this case there's nothing to do.
-//
 func (fs *zFilesystem) controllerPublishVolume(ctx context.Context, token *zfssarest.Token,
 	req *csi.ControllerPublishVolumeRequest, nodeName string) (*csi.ControllerPublishVolumeResponse, error) {
 
-    // Note: the volume context of the volume provisioned from an existing share does not have the mountpoint.
+	// Note: the volume context of the volume provisioned from an existing share does not have the mountpoint.
 	// Use the share (corresponding to volumeAttributes.share of PV configuration) to define the mountpoint.
 
 	return &csi.ControllerPublishVolumeResponse{}, nil
 }
 
-
 // Unpublishes a file system. In this case there's nothing to do.
-//
 func (fs *zFilesystem) controllerUnpublishVolume(ctx context.Context, token *zfssarest.Token,
 	req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	utils.GetLogCTRL(ctx, 5).Println("fs.controllerUnpublishVolume")
@@ -213,7 +220,7 @@ func (fs *zFilesystem) controllerExpandVolume(ctx context.Context, token *zfssar
 	reqCapacity := req.GetCapacityRange().RequiredBytes
 	if fs.capacity >= reqCapacity {
 		return &csi.ControllerExpandVolumeResponse{
-			CapacityBytes: fs.capacity,
+			CapacityBytes:         fs.capacity,
 			NodeExpansionRequired: false,
 		}, nil
 	}
@@ -228,8 +235,8 @@ func (fs *zFilesystem) controllerExpandVolume(ctx context.Context, token *zfssar
 	fs.capacity = fsinfo.Quota
 
 	return &csi.ControllerExpandVolumeResponse{
-		CapacityBytes:			fsinfo.Quota,
-		NodeExpansionRequired:	false,
+		CapacityBytes:         fsinfo.Quota,
+		NodeExpansionRequired: false,
 	}, nil
 }
 
@@ -277,12 +284,12 @@ func (fs *zFilesystem) getSnapshotsList(ctx context.Context, token *zfssarest.To
 	return zfssaSnapshotList2csiSnapshotList(ctx, token.Name, snapList), nil
 }
 
-func (fs *zFilesystem) getState() volumeState { return fs.state }
-func (fs *zFilesystem) getName() string { return fs.id.Name }
-func (fs *zFilesystem) getHref() string { return fs.href }
+func (fs *zFilesystem) getState() volumeState        { return fs.state }
+func (fs *zFilesystem) getName() string              { return fs.id.Name }
+func (fs *zFilesystem) getHref() string              { return fs.href }
 func (fs *zFilesystem) getVolumeID() *utils.VolumeId { return fs.id }
-func (fs *zFilesystem) getCapacity() int64 { return fs.capacity }
-func (fs *zFilesystem) isBlock() bool { return false }
+func (fs *zFilesystem) getCapacity() int64           { return fs.capacity }
+func (fs *zFilesystem) isBlock() bool                { return false }
 
 func (fs *zFilesystem) setInfo(volInfo interface{}) {
 
@@ -316,7 +323,7 @@ func (fs *zFilesystem) lock(ctx context.Context) volumeState {
 	return fs.state
 }
 
-func (fs *zFilesystem) unlock(ctx context.Context) (int32, volumeState){
+func (fs *zFilesystem) unlock(ctx context.Context) (int32, volumeState) {
 	fs.bolt.Unlock(ctx)
 	utils.GetLogCTRL(ctx, 5).Printf("%s is unlocked", fs.id.String())
 	return fs.refcount, fs.state
