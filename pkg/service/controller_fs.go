@@ -59,6 +59,16 @@ func (fs *zFilesystem) create(ctx context.Context, token *zfssarest.Token,
 	capacityRange := req.GetCapacityRange()
 	capabilities := req.GetVolumeCapabilities()
 
+	if _, ok := req.Parameters["restrictChown"]; !ok {
+		utils.GetLogCTRL(ctx, 5).Println("Adding restrictChown to CreateFilesystem req parameters")
+		req.Parameters["restrictChown"] = "false"
+	}
+
+	if _, ok := req.Parameters["shareNFS"]; !ok {
+		utils.GetLogCTRL(ctx, 5).Println("Adding shareNFS to CreateFilesystem req parameters")
+		req.Parameters["shareNFS"] = "on"
+	}
+
 	fsinfo, httpStatus, err := zfssarest.CreateFilesystem(ctx, token,
 		req.GetName(), getVolumeSize(capacityRange), &req.Parameters)
 	if err != nil {

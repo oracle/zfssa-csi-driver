@@ -165,7 +165,8 @@ func (zd *ZFSSADriver) lookupVolume(ctx context.Context, token *zfssarest.Token,
 
 	vid, err := utils.VolumeIdFromString(volumeId)
 	if err != nil {
-		return nil, err
+		utils.GetLogCTRL(ctx, 2).Println("Failed to get volumeId from String", err.Error())
+		return nil, status.Errorf(codes.NotFound, "Volume (%s) not found", volumeId)
 	}
 
 	// Check first in the list of volumes if the volume is already known.
@@ -197,7 +198,7 @@ func (zd *ZFSSADriver) lookupVolume(ctx context.Context, token *zfssarest.Token,
 		if err != nil {
 			zd.releaseVolume(ctx, zvol)
 			if httpStatus == http.StatusNotFound {
-				return nil, status.Error(codes.NotFound, "Volume (%s) not found")
+				return nil, status.Errorf(codes.NotFound, "Volume (%s) not found", volumeId)
 			}
 			return nil, err
 		}
@@ -206,7 +207,7 @@ func (zd *ZFSSADriver) lookupVolume(ctx context.Context, token *zfssarest.Token,
 		return zvol, nil
 	default:
 		zd.releaseVolume(ctx, zvol)
-		return nil, status.Error(codes.NotFound, "Volume (%s) not found")
+		return nil, status.Errorf(codes.NotFound, "Volume (%s) not found", volumeId)
 	}
 }
 
