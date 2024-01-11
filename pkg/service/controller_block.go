@@ -152,11 +152,15 @@ func (lun *zLUN) delete(ctx context.Context, token *zfssarest.Token) (*csi.Delet
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
-func (lun *zLUN) clone(ctx context.Context, token *zfssarest.Token,
+func (lun *zLUN) cloneVolume(ctx context.Context, token *zfssarest.Token,
 	req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 
-	utils.GetLogCTRL(ctx, 5).Println("lun.clone")
-	return nil, status.Error(codes.Unimplemented, "LUN clone not implemented yet")
+	// Create a snapshot to base the clone on
+
+	// Clone the snapshot to the volume
+	
+	utils.GetLogCTRL(ctx, 5).Println("lun.cloneVolume")
+	return nil, status.Error(codes.Unimplemented, "LUN cloneVolume not implemented yet")
 }
 
 func (lun *zLUN) controllerPublishVolume(ctx context.Context, token *zfssarest.Token,

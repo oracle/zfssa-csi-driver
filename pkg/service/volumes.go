@@ -92,7 +92,7 @@ type zVolumeInterface interface {
 		req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error)
 	cloneSnapshot(ctx context.Context, token *zfssarest.Token,
 		req *csi.CreateVolumeRequest, zsnap *zSnapshot) (*csi.CreateVolumeResponse, error)
-	clone(ctx context.Context, token *zfssarest.Token,
+	cloneVolume(ctx context.Context, token *zfssarest.Token,
 		req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error)
 	getDetails(ctx context.Context, token *zfssarest.Token) (int, error)
 	setInfo(volInfo interface{})

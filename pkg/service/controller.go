@@ -52,7 +52,7 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 		return nil, err
 	}
 
-	// TODO: check if pool/project are populated if the storage class is left out on volume clone
+	// TODO: check if pool/project are populated if the storage class is left out on volume cloneVolume
 	parameters := req.GetParameters()
 	pool := parameters["pool"]
 	project := parameters["project"]
@@ -63,6 +63,7 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 	}
 	defer zd.releaseVolume(ctx, zvol)
 
+	// Check if there is a source for the new volume
 	if volumeContentSource := req.GetVolumeContentSource(); volumeContentSource != nil {
 		switch volumeContentSource.Type.(type) {
 		case *csi.VolumeContentSource_Snapshot:
@@ -77,17 +78,15 @@ func (zd *ZFSSADriver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRe
 		case *csi.VolumeContentSource_Volume:
 			volume := volumeContentSource.GetVolume()
 			utils.GetLogCTRL(ctx, 5).Println("CreateVolumeClone", "request", volume)
-			// clone creation is complex, delegate out to it
-			return zvol.clone(ctx, token, req)
+			// cloneVolume creation is complex, delegate out to it
+			return zvol.cloneVolume(ctx, token, req)
 		default:
 			return nil, status.Errorf(codes.InvalidArgument, "%v type not implemented in driver",
 				volumeContentSource.GetType())
 		}
-
-		return nil, status.Error(codes.InvalidArgument, "Only snapshots are supported as content source")
-	} else {
-		return zvol.create(ctx, token, req)
 	}
+
+	return zvol.create(ctx, token, req)
 }
 
 // Retrieve the volume size from the request (if not available, use a default)

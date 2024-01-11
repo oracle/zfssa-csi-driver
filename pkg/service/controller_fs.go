@@ -8,6 +8,7 @@ package service
 import (
 	"context"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"github.com/oracle/zfssa-csi-driver/pkg/utils"
 	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	context2 "golang.org/x/net/context"
@@ -170,11 +171,16 @@ func (fs *zFilesystem) delete(ctx context.Context, token *zfssarest.Token) (*csi
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
-func (lun *zFilesystem) clone(ctx context.Context, token *zfssarest.Token,
+func (lun *zFilesystem) cloneVolume(ctx context.Context, token *zfssarest.Token,
 	req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+	utils.GetLogCTRL(ctx, 5).Println("cloneVolume", "request", protosanitizer.StripSecrets(req))
 
-	utils.GetLogCTRL(ctx, 5).Println("fs.clone")
-	return nil, status.Error(codes.Unimplemented, "Filesystem clone not implemented yet")
+	// Create a snapshot to base the clone on
+
+	// Clone the snapshot to the volume
+
+	utils.GetLogCTRL(ctx, 5).Println("fs.cloneVolume")
+	return nil, status.Error(codes.Unimplemented, "Filesystem cloneVolume not implemented yet")
 }
 
 // Publishes a file system. In this case there's nothing to do.
