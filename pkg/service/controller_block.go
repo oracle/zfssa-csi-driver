@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2024, Oracle and/or its affiliates.
  * Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
  */
 
@@ -158,7 +158,7 @@ func (lun *zLUN) cloneVolume(ctx context.Context, token *zfssarest.Token,
 	// Create a snapshot to base the clone on
 
 	// Clone the snapshot to the volume
-	
+
 	utils.GetLogCTRL(ctx, 5).Println("lun.cloneVolume")
 	return nil, status.Error(codes.Unimplemented, "LUN cloneVolume not implemented yet")
 }
