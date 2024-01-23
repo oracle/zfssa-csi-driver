@@ -53,15 +53,19 @@ Ensure the following information and requirements can be met prior to installati
     Container Runtime will likely try to pull them. If your Container Runtime cannot access the images you will have to
     pull them manually before deployment. The required images are: 
 
-    * node-driver-registar v2.7.0+.
-    * external-attacher v4.1.0+.
-    * external-provisioner v3.4.0+.
-    * external-resizer v1.7.0+.
-    * external-snapshotter v6.2.1+.
+    * node-driver-registar v2.9.0+.
+    * external-attacher v4.4.0+.
+    * external-provisioner v3.6.0+.
+    * external-resizer v1.9.0+.
+    * external-snapshotter v6.3.0+.
+    * livenessprobe v2.11.0
+    * snapshot-controller v6.3.0
 
     The current deployment uses the sidecar images built by Oracle and available
     from the Oracle Container Registry (container-registry.oracle.com/olcne/).
     Refer to the [current deployment for more information](deploy/helm/k8s-1.25/values.yaml).
+
+    Sidecars are also available from [the Kubernetes team](https://kubernetes-csi.github.io/docs/sidecar-containers.html).
     
 * Plugin image
 
