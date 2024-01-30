@@ -323,6 +323,15 @@ Copyright (c) 2016 json-iterator
 
 --------------------------------- (separator) ----------------------------------
 
+== Dependency
+github.com/kubernetes-csi/csi-lib-iscsi
+
+== License Type
+SPDX:Apache-2.0
+
+== Copyright
+(no copyright notices found)
+
 --------------------------------- (separator) ----------------------------------
 
 == Dependency
@@ -1867,4 +1876,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 === ATTRIBUTION-HELPER-GENERATED:
 === Attribution helper version: {Major:0 Minor:11 GitVersion: GitCommit: GitTreeState:dirty BuildDate:1970-01-01T00:00:00Z GoVersion:go1.21.4 Compiler:gc Platform:darwin/arm64}
-=== License file based on go.mod with md5 sum:  ee859f84e9add34573b0ecb132972610
+=== License file based on go.mod with md5 sum:  2a50718c192e1163b46460fd9130b5d9

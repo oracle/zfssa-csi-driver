@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/container-storage-interface/spec v1.6.0
 	github.com/golang/protobuf v1.5.2
-	github.com/kubernetes-csi/csi-lib-iscsi v0.0.0-20230429162816-0798dedca439
+	github.com/kubernetes-csi/csi-lib-iscsi v0.0.0-20240129182017-28f091c08ef7
 	github.com/kubernetes-csi/csi-lib-utils v0.11.0
 	golang.org/x/net v0.7.0
 	google.golang.org/grpc v1.47.0
