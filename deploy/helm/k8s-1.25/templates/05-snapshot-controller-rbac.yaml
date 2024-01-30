@@ -28,10 +28,10 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents"]
-    verbs: ["create", "get", "list", "watch", "update", "delete"]
+    verbs: ["create", "get", "list", "watch", "update", "delete", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots/status"]
     verbs: ["update"]
@@ -41,11 +41,12 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: snapshot-controller-role
+  namespace: {{ .Values.deployment.namespace }}
 subjects:
   - kind: ServiceAccount
     name: snapshot-controller
     # replace with non-default namespace name
-    namespace: default
+    namespace: {{ .Values.deployment.namespace }}
 roleRef:
   kind: ClusterRole
   # change the name also here if the ClusterRole gets renamed
@@ -56,7 +57,7 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  namespace: default # TODO: replace with the namespace you want for your controller
+  namespace: {{ .Values.deployment.namespace }}
   name: snapshot-controller-leaderelection
 rules:
 - apiGroups: ["coordination.k8s.io"]
@@ -68,11 +69,12 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: snapshot-controller-leaderelection
-  namespace: default # TODO: replace with the namespace you want for your controller
+  namespace: {{ .Values.deployment.namespace }}
 subjects:
   - kind: ServiceAccount
     name: snapshot-controller
-    namespace: default # TODO: replace with the namespace you want for your controller
+    namespace: {{ .Values.deployment.namespace }}
+
 roleRef:
   kind: Role
   name: snapshot-controller-leaderelection

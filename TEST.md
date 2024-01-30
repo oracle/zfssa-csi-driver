@@ -109,7 +109,7 @@ Test the driver to Create a file system
 To run the unit tests, you must have compiled csi-sanity from the 
 [csi-test project](https://github.com/kubernetes-csi/csi-test). Once
 compiled, scp the file to the node that is functioning as a controller
-in a Kubernetes Cluster with the ZFSSA CSI Driver deployed and running.
+in a Kubernetes Cluster with the Oracle ZFS Storage CSI Driver deployed and running.
 
 There is documentation on the test process available at the Kubernetes
 [testing of CSI drivers page](https://kubernetes.io/blog/2020/01/08/testing-of-csi-drivers/).
@@ -122,11 +122,18 @@ Create a test parameters file that makes sense in your environment, like this:
 volumeType: thin
 targetGroup: csi-data-path-target
 blockSize: "8192"
-pool: h1-pool1
-project: pmonday
-targetPortal: "10.80.44.65:3260"
-nfsServer: "10.80.44.65"
+pool: <pool-name>
+project: <project>
+targetPortal: "<portal-ip-address>:3260"
+nfsServer: "<nfs-server>"
 ```
+
+Replace the variables above
+* <pool-name> - the name of the pool to use on the target Oracle ZFS Storage Appliance
+* <project> - the name of the project to use on the target Oracle ZFS Storage Appliance
+* <portal-ip-address> - the IP address of the iSCSI target portal on the Oracle ZFS Storage Appliance
+* <nfs-path> - the IP address of the NFS server on the Oracle ZFS Storage Appliance used to mount filesystems
+
 Then run the tests
 ```
 ./csi-sanity --csi.endpoint=/var/lib/kubelet/plugins/com.oracle.zfssabs/csi.sock -csi.testvolumeparameters=./test-volume-parameters.yaml
@@ -137,3 +144,11 @@ on the Oracle ZFS Storage Appliance, it looks like this:
 ```
 [Fail] Controller Service [Controller Server] CreateVolume [It] should not fail when creating volume with maximum-length name
 ```
+
+A few additional notes on options for csi-sanity:
+
+* -csi.mountdir needs be a location on a node that is accessible by zfssa-csi-nodeplugin (but not created yet)
+* --ginkgo.focus and --ginkgo.skip can be used to specify the test cases to be executed or skipped. Eg, --ginkgo.focus NodeUnpublish or --ginkgo.skip '[Ss]napshot'.
+* --ginkgo.fail-fast: stop running after a failure occurs.
+* --ginkgo.v: verbose output
+* --ginkgo.seed 1: do not randomize the execution of test suite. 

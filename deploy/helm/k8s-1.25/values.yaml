@@ -1,6 +1,6 @@
 # Global docker image setting
 image:
-  sidecarBase: k8s.gcr.io/sig-storage/
+  sidecarBase: container-registry.oracle.com/olcne/
   zfssaBase: iad.ocir.io/zs/store/csi/
   pullPolicy: Always
 
@@ -8,22 +8,28 @@ image:
 images:
   csiNodeDriverRegistrar:
     name: csi-node-driver-registrar
-    tag: "v2.0.0"
+    tag: "v2.9.0"
   zfssaCsiDriver:
     name: zfssa-csi-driver
-    tag: "v1.0.0"
+    tag: "v1.2.0"
   csiProvisioner:
     name: csi-provisioner
-    tag: "v2.0.5"
+    tag: "v3.6.0"
   csiAttacher:
     name: csi-attacher
-    tag: "v3.0.2"
+    tag: "v4.4.0"
   csiResizer:
     name: csi-resizer
-    tag: "v1.1.0"
+    tag: "v1.9.0"
   csiSnapshotter:
     name: csi-snapshotter
-    tag: "v3.0.3"
+    tag: "v6.3.0"
+  csiLivenessProbe:
+    name: livenessprobe
+    tag: "v2.11.0"
+  csiSnapshotController:
+    name: snapshot-controller
+    tag: "v6.3.0"
 
 paths:
   pluginDir:
