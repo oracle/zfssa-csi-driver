@@ -10,8 +10,7 @@ require (
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/onsi/gomega v1.9.0 // indirect
 	github.com/prometheus/client_golang v1.2.1 // indirect
-	golang.org/x/net v0.0.0-20191101175033-0deb6923b6d9
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
+	golang.org/x/net v0.23.0
 	google.golang.org/grpc v1.23.1
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/apimachinery v0.17.11
