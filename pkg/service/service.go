@@ -6,11 +6,11 @@
 package service
 
 import (
-	"github.com/oracle/zfssa-csi-driver/pkg/utils"
-	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"errors"
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/oracle/zfssa-csi-driver/pkg/utils"
+	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
@@ -28,9 +28,9 @@ import (
 
 const (
 	// Default Log Level
-	DefaultLogLevel = "3"
-	DefaultCertPath = "/mnt/certs/zfssa.crt"
-	DefaultCredPath = "/mnt/zfssa/zfssa.yaml"
+	DefaultLogLevel   = "3"
+	DefaultCertPath   = "/mnt/certs/zfssa.crt"
+	DefaultCredPath   = "/mnt/zfssa/zfssa.yaml"
 	DefaultConfigPath = "/mnt/config/config.yaml"
 )
 
@@ -49,15 +49,15 @@ type ZFSSADriver struct {
 }
 
 type config struct {
-	Appliance	string
-	User		string
-	endpoint	string
-	HostIp		string
-	NodeName	string
-	PodIp		string
-	Secure		bool
-	logLevel	string
-	Certificate	[]byte
+	Appliance    string
+	User         string
+	endpoint     string
+	HostIp       string
+	NodeName     string
+	PodIp        string
+	Secure       bool
+	logLevel     string
+	Certificate  []byte
 	CertLocation string
 	CredLocation string
 }
@@ -73,8 +73,8 @@ type accessType int
 // NonBlocking server
 
 type nonBlockingGRPCServer struct {
-	wg		sync.WaitGroup
-	server	*grpc.Server
+	wg     sync.WaitGroup
+	server *grpc.Server
 }
 
 const (
@@ -86,7 +86,7 @@ const (
 	Tib    int64 = Gib * 1024
 	Tib100 int64 = Tib * 100
 
-	DefaultVolumeSizeBytes	int64 = 50 * Gib
+	DefaultVolumeSizeBytes int64 = 50 * Gib
 
 	mountAccess accessType = iota
 	blockAccess
@@ -94,7 +94,7 @@ const (
 
 const (
 	UsernamePattern string = `^[a-zA-Z][a-zA-Z0-9_\-\.]*$`
-	UsernameLength int = 255
+	UsernameLength  int    = 255
 )
 
 type ZfssaBlockVolume struct {
@@ -122,7 +122,7 @@ func NewZFSSADriver(driverName, version string) (*ZFSSADriver, error) {
 
 	utils.InitLogs(zd.config.logLevel, zd.name, version, zd.config.NodeName)
 
-	err = zfssarest.InitREST(zd.config.Appliance, zd.config.Certificate, zd.config.Secure)
+	err = zfssarest.InitREST(zd.config.Appliance, zd.config.CertLocation, zd.config.Secure)
 	if err != nil {
 		return nil, err
 	}
@@ -175,8 +175,8 @@ func getConfig(zd *ZFSSADriver) error {
 		return errors.New(fmt.Sprintf("Cannot get ZFSSA username: %s", err))
 	}
 
-        // Get ZFSSA_TARGET from the mounted config file if available
-	zfssaHost, _ := utils.GetValueFromYAML(DefaultConfigPath,"ZFSSA_TARGET")
+	// Get ZFSSA_TARGET from the mounted config file if available
+	zfssaHost, _ := utils.GetValueFromYAML(DefaultConfigPath, "ZFSSA_TARGET")
 	appliance := getEnvFallback("ZFSSA_TARGET", zfssaHost)
 	zd.config.Appliance = strings.TrimSpace(appliance)
 	if zd.config.Appliance == "not-set" {
@@ -189,7 +189,7 @@ func getConfig(zd *ZFSSADriver) error {
 	}
 
 	zd.config.endpoint = getEnvFallback("CSI_ENDPOINT", "")
-	if zd.config.endpoint == ""	{
+	if zd.config.endpoint == "" {
 		return errors.New("endpoint is required")
 	} else {
 		if !strings.HasPrefix(zd.config.endpoint, "unix://") {
@@ -204,8 +204,10 @@ func getConfig(zd *ZFSSADriver) error {
 	}
 
 	switch strings.ToLower(strings.TrimSpace(getEnvFallback("ZFSSA_INSECURE", "False"))) {
-	case "true":	zd.config.Secure = false
-	case "false":	zd.config.Secure = true
+	case "true":
+		zd.config.Secure = false
+	case "false":
+		zd.config.Secure = true
 	default:
 		return errors.New("ZFSSA_INSECURE value is invalid")
 	}
@@ -219,6 +221,7 @@ func getConfig(zd *ZFSSADriver) error {
 		if os.IsNotExist(err) {
 			return errors.New("certificate does not exits")
 		}
+		zd.config.CertLocation = certfile
 		zd.config.Certificate, err = ioutil.ReadFile(certfile)
 		if err != nil {
 			return errors.New("failed to read certificate")
@@ -238,7 +241,7 @@ func getConfig(zd *ZFSSADriver) error {
 // Starts the CSI driver. This includes registering the different servers (Identity, Controller and Node) with
 // the CSI framework and starting listening on the UNIX socket.
 
-var sigList = []os.Signal {
+var sigList = []os.Signal{
 	syscall.SIGTERM,
 	syscall.SIGHUP,
 	syscall.SIGINT,
@@ -344,7 +347,7 @@ func (s *nonBlockingGRPCServer) serve(endpoint string,
 		return
 	}
 
-	opts := []grpc.ServerOption{ grpc.UnaryInterceptor(interceptorGRPC)	}
+	opts := []grpc.ServerOption{grpc.UnaryInterceptor(interceptorGRPC)}
 
 	server := grpc.NewServer(opts...)
 	s.server = server
