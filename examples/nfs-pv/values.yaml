@@ -5,6 +5,13 @@ pvcExistingFilesystemName: zfssa-fs-existing-pvc
 podExistingFilesystemName: zfssa-fs-existing-pod
 applianceName: OVERRIDE
 
+# Location for images used
+imageBase: container-registry.oracle.com/os/
+images:
+  os:
+    name: oraclelinux
+    tag: "7-slim"
+
 # Settings for target appliance
 appliance:
   volumeType: thin

@@ -13,7 +13,7 @@ import (
 	"github.com/oracle/zfssa-csi-driver/pkg/zfssarest"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net"
 	"os"
